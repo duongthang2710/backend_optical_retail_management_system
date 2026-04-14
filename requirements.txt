@@ -1,0 +1,13 @@
+# Note:
+# This project uses Node.js/Express, so package.json is the source of truth.
+# This file is provided only as a quick dependency reference as requested.
+
+express@^5.2.1
+dotenv@^17.4.2
+bcryptjs@^3.0.3
+jsonwebtoken@^9.0.3
+nodemailer@^8.0.5
+express-validator@^7.3.2
+cors@^2.8.6
+morgan@^1.10.1
+nodemon@^3.1.14
