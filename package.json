@@ -22,7 +22,7 @@
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",
-    "test": "echo \"No tests configured\""
+    "test": "node -e \"console.error('No tests configured'); process.exit(1)\""
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
