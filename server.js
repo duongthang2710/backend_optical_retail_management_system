@@ -5,7 +5,7 @@ const express = require("express");
 const morgan = require("morgan");
 
 const authRoute = require("./src/routes/authRoute");
-
+const productCategoriesRoute = require("./src/routes/productCategoriesRoute");
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -20,7 +20,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/auth", authRoute);
-
+app.use("/products", productCategoriesRoute);
 app.use((req, res) => {
   res.status(404).json({
     message: "Route not found",
