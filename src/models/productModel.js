@@ -28,9 +28,9 @@ desc: {
 
 // 1. Định nghĩa quan hệ
 Product.associate = (models) => {
-Product.belongsTo(models.Brand, { foreignKey: 'brand_id' });
-Product.belongsTo(models.Category, { foreignKey: 'category_id' });
-Product.hasMany(models.ProductVariant, { foreignKey: 'product_id', as: 'variants' });
+    Product.belongsTo(models.Brand, { foreignKey: 'brand_id' });
+    Product.belongsTo(models.Category, { foreignKey: 'category_id' });
+    Product.hasMany(models.ProductVariant, { foreignKey: 'product_id', as: 'variants' });
 };
 
 module.exports = {
