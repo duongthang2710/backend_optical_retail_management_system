@@ -13,20 +13,47 @@ Backend Node.js Express cho he thong quan ly cua hang kinh. Hien tai repo da tri
 - express-validator
 - cors
 - morgan
+- sequelize
+- mysql2
+
+## Dependencies
+
+### Production Dependencies
+
+| Thư viện            | Phiên bản | Mô tả                                                                     |
+| ------------------- | --------- | ------------------------------------------------------------------------- |
+| `express`           | ^5.2.1    | Web framework Node.js, cung cấp các API HTTP cơ bản                       |
+| `sequelize`         | ^6.37.8   | ORM (Object-Relational Mapping) cho Node.js, hỗ trợ các cơ sở dữ liệu SQL |
+| `mysql2`            | ^3.22.0   | MySQL client driver cho Node.js, cho phép kết nối đến database MySQL      |
+| `dotenv`            | ^17.4.2   | Tải biến môi trường từ file `.env` vào `process.env`                      |
+| `bcryptjs`          | ^3.0.3    | Hash mật khẩu an toàn với thuật toán bcrypt                               |
+| `jsonwebtoken`      | ^9.0.3    | Tạo và xác thực JWT (JSON Web Token) cho authentication                   |
+| `express-validator` | ^7.3.2    | Middleware để validate và sanitize dữ liệu request                        |
+| `nodemailer`        | ^8.0.5    | Gửi email qua SMTP, dùng cho OTP và khôi phục mật khẩu                    |
+| `cors`              | ^2.8.6    | Middleware hỗ trợ CORS (Cross-Origin Resource Sharing)                    |
+| `morgan`            | ^1.10.1   | HTTP request logger middleware                                            |
+
+### Development Dependencies
+
+| Thư viện  | Phiên bản | Mô tả                                                                     |
+| --------- | --------- | ------------------------------------------------------------------------- |
+| `nodemon` | ^3.1.14   | Tự động khởi động lại server khi code thay đổi (chỉ dùng khi development) |
 
 ## Current Scope
 
 Da trien khai:
+
 - Authentication API
-  - Register
-  - Login
-  - Logout
-  - Refresh token
-  - Forgot password
-  - Reset password
-  - Change password
+    - Register
+    - Login
+    - Logout
+    - Refresh token
+    - Forgot password
+    - Reset password
+    - Change password
 
 Chua trien khai:
+
 - Admin
 - Cart
 - Order Payment
@@ -56,8 +83,29 @@ backend_optical_retail_management_system/
 
 ### 1. Install dependencies
 
+Cài đặt tất cả dependencies:
+
 ```bash
 npm install
+```
+
+Hoặc cài đặt từng thư viện riêng lẻ:
+
+```bash
+# Web framework
+npm install express
+
+# Database & ORM
+npm install sequelize mysql2
+
+# Authentication
+npm install bcryptjs jsonwebtoken
+
+# Utilities
+npm install dotenv cors morgan nodemailer express-validator
+
+# Development
+npm install --save-dev nodemon
 ```
 
 ### 2. Create environment file
@@ -93,6 +141,7 @@ SMTP_FROM=
 ```
 
 Luu y:
+
 - Neu chua cau hinh SMTP, API quen mat khau van hoat dong.
 - OTP se duoc log ra terminal hoac file log de test local.
 
@@ -134,11 +183,11 @@ Body:
 
 ```json
 {
-  "fullName": "Nguyen Van A",
-  "email": "customer@example.com",
-  "phone": "+84912345678",
-  "password": "Password1",
-  "confirmPassword": "Password1"
+    "fullName": "Nguyen Van A",
+    "email": "customer@example.com",
+    "phone": "+84912345678",
+    "password": "Password1",
+    "confirmPassword": "Password1"
 }
 ```
 
@@ -152,8 +201,8 @@ Body:
 
 ```json
 {
-  "email": "customer@example.com",
-  "password": "Password1"
+    "email": "customer@example.com",
+    "password": "Password1"
 }
 ```
 
@@ -179,7 +228,7 @@ Body:
 
 ```json
 {
-  "refreshToken": "your_refresh_token"
+    "refreshToken": "your_refresh_token"
 }
 ```
 
@@ -193,7 +242,7 @@ Body:
 
 ```json
 {
-  "email": "customer@example.com"
+    "email": "customer@example.com"
 }
 ```
 
@@ -207,9 +256,9 @@ Body:
 
 ```json
 {
-  "email": "customer@example.com",
-  "otp": "123456",
-  "newPassword": "Password2"
+    "email": "customer@example.com",
+    "otp": "123456",
+    "newPassword": "Password2"
 }
 ```
 
@@ -229,8 +278,8 @@ Body:
 
 ```json
 {
-  "currentPassword": "Password2",
-  "newPassword": "Password3"
+    "currentPassword": "Password2",
+    "newPassword": "Password3"
 }
 ```
 
@@ -240,9 +289,9 @@ Body:
 - Password toi thieu 8 ky tu
 - Confirm password phai khop password
 - Phone chi chap nhan so di dong Viet Nam
-  - `0xxxxxxxxx`
-  - `84xxxxxxxxx`
-  - `+84xxxxxxxxx`
+    - `0xxxxxxxxx`
+    - `84xxxxxxxxx`
+    - `+84xxxxxxxxx`
 - OTP gom 6 chu so
 
 ## Auth Notes
@@ -258,7 +307,7 @@ Success:
 
 ```json
 {
-  "message": "..."
+    "message": "..."
 }
 ```
 
@@ -266,7 +315,7 @@ Error:
 
 ```json
 {
-  "message": "Noi dung loi"
+    "message": "Noi dung loi"
 }
 ```
 
