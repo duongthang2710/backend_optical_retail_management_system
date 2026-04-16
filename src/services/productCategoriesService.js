@@ -1,4 +1,5 @@
-const { product, productVariant } = require("../models/productModel");
+const product = require("../models/productModel");
+const productVariant = require("../models/productVariantModel");
 const { Op } = require("sequelize");
 
 class ProductService {
@@ -40,7 +41,7 @@ class ProductService {
                 },
             ],
             limit: Number(limit),
-            ofset: offset,
+            offset: offset,
             distinct: true,
         });
         return {

@@ -2,15 +2,18 @@ const express = require("express");
 const router = express.Router();
 
 const productController = require("../controllers/productCategoriesController");
-const { validateGetProductsQuery, validateCreateProduct } = require("../validators/productValidator");
+const {
+    validateGetProductsQuery,
+    validateCreateProduct,
+} = require("../validators/productValidator");
 const { optionalAuth } = require("../middlewares/optionalAuthMiddleware");
 const { authMiddleware, isAdmin } = require("../middlewares/authMiddleware");
 
 router.get(
-  "/products",
-  optionalAuth,
-  validateGetProductsQuery,
-  productController.getAllProducts,
+    "/products",
+    optionalAuth,
+    validateGetProductsQuery,
+    productController.getAllProducts,
 );
 
 router.post(
@@ -19,3 +22,5 @@ router.post(
     validateCreateProduct,
     productController.createProduct,
 );
+
+module.exports = router;
