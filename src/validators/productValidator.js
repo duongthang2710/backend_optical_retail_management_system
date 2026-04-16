@@ -18,4 +18,23 @@ const validateGetProductsQuery = (req, res, next) => {
     }
     
 }
-module.exports = { validateGetProductsQuery };
+
+const validateCreateProduct = (req, res, next) => {
+    const { product_name, category_id, brand_id, vardiants } = req.body;
+    if (!product_name) return sendResponse(res, 400, "Product name is required.");
+    if (!category_id || !brand_id) return sendResponse(res, 400, "Category ID and Brand ID are required.");
+    if (!vardiants || !Array.isArray(vardiants) || vardiants.length === 0) {
+        return sendResponse(res, 400, "At least one variant is required.");
+    }
+    for (const v of vardiants) { 
+        if (!v.color) return sendResponse(res, 400, "Variant color if required.");
+        if (!v.price || isNaN(v.price) || v.price <= 0) {
+            return sendResponse(res, 400, "Variant price must be a positive number.");
+        }
+        if (!v.stock_quantity || isNaN(v.stock_quantity) || v.stock_quantity < 0) {
+            return sendResponse(res, 400, "Variant stock quantity must be a non-negative integer.");
+        }
+    }
+
+}
+module.exports = { validateGetProductsQuery, validateCreateProduct};

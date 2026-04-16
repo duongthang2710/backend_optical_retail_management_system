@@ -30,19 +30,65 @@ class ProductService {
                 {
                     model: productVariant,
                     as: "variants",
-                    attributes: ["id", "color", "price", "stock_quantity", "image"],
-                }
+                    attributes: [
+                        "id",
+                        "color",
+                        "price",
+                        "stock_quantity",
+                        "image",
+                    ],
+                },
             ],
             limit: Number(limit),
             ofset: offset,
-            distinct: true
+            distinct: true,
         });
         return {
             totalItems: count,
             totalPages: Math.ceil(count / Number(limit)),
             currentPage: Number(page),
-            products: rows
+            products: rows,
         };
+    }
+
+    async createProduct(productData) {
+        const trans = await sequelize.transaction();
+        try {
+            const {
+                product_name,
+                category_id,
+                brand_id,
+                material,
+                shape,
+                desc,
+                variants,
+            } = productData;
+            const newProduct = await product.createProduct(
+                product_name,
+                category_id,
+                brand_id,
+                material,
+                shape,
+                desc,
+                { transaction: trans },
+            );
+
+            //thêm variant nếu có
+            if (variants && variants.length > 0) {
+                const variantWithId = variants.map((v) => ({
+                    ...v,
+                    product_id: newProduct.product_id,
+                }));
+                await productVariant.bulkCreate(variantWithId, {
+                    transaction: trans,
+                });
+            }
+            await trans.commit();
+            return newProduct;
+        } catch (error) {
+            await trans.rollback();
+            throw error;
+        }
     }
 }
 

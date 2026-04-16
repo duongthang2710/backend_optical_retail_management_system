@@ -17,3 +17,5 @@ const optionalAuth = (req, res, next) => {
     }
     next();
 }
+
+module.exports = optionalAuth;
