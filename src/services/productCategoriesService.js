@@ -1,5 +1,5 @@
-const product = require("../models/productModel");
-const productVariant = require("../models/productVariantModel");
+const { Product } = require("../models/productModel");
+const { ProductVariant } = require("../models/productVariantModel");
 const { Op } = require("sequelize");
 
 class ProductService {
@@ -9,7 +9,7 @@ class ProductService {
 
         // Tìm kiếm theo tên sản phẩm
         if (keyword) {
-            whereConditions.Product_name = { [Op.like]: `%${keyword}%` };
+            whereConditions.product_name = { [Op.like]: `%${keyword}%` };
         }
 
         // Lọc theo chất liệu, hình dạng, giá tiền
@@ -25,14 +25,14 @@ class ProductService {
         // Xử lý phân trang
         const offset = (Number(page) - 1) * Number(limit);
         // Truy vấn DB
-        const { count, rows } = await product.findAndCountAll({
+        const { count, rows } = await Product.findAndCountAll({
             where: whereConditions,
             include: [
                 {
-                    model: productVariant,
+                    model: ProductVariant,
                     as: "variants",
                     attributes: [
-                        "id",
+                        "variant_id",
                         "color",
                         "price",
                         "stock_quantity",
@@ -64,13 +64,15 @@ class ProductService {
                 desc,
                 variants,
             } = productData;
-            const newProduct = await product.createProduct(
-                product_name,
-                category_id,
-                brand_id,
-                material,
-                shape,
-                desc,
+            const newProduct = await Product.create(
+                {
+                    product_name,
+                    category_id,
+                    brand_id,
+                    material,
+                    shape,
+                    desc,
+                },
                 { transaction: trans },
             );
 
@@ -80,7 +82,7 @@ class ProductService {
                     ...v,
                     product_id: newProduct.product_id,
                 }));
-                await productVariant.bulkCreate(variantWithId, {
+                await ProductVariant.bulkCreate(variantWithId, {
                     transaction: trans,
                 });
             }

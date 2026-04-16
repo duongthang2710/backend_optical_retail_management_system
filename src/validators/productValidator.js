@@ -16,8 +16,9 @@ const validateGetProductsQuery = (req, res, next) => {
             return sendResponse(res, 400, "Limit cannot exceed 100.");
         }
     }
-    
-}
+
+    return next();
+};
 
 const validateCreateProduct = (req, res, next) => {
     const { product_name, category_id, brand_id, vardiants } = req.body;
@@ -36,5 +37,6 @@ const validateCreateProduct = (req, res, next) => {
         }
     }
 
-}
+    return next();
+};
 module.exports = { validateGetProductsQuery, validateCreateProduct};
