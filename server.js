@@ -6,6 +6,7 @@ const morgan = require("morgan");
 
 const authRoute = require("./src/routes/authRoute");
 const productCategoriesRoute = require("./src/routes/productCategoriesRoute");
+const {errorHandlingMiddleware} = require("./src/middlewares/errorHandlingMiddleware")
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -49,6 +50,9 @@ app.use((err, req, res, next) => {
         message,
     });
 });
+
+
+app.use(errorHandlingMiddleware);
 
 if (require.main === module) {
     app.listen(port, () => {
