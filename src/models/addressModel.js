@@ -22,7 +22,7 @@ const Address = sequelize.define('Address', {
 }, {
     sequelize,
     moduleName: 'Address',
-    tableName: 'addresses',
+    tableName: 'Address',
     timestamps: false   
 });
 

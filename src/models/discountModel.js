@@ -36,7 +36,7 @@ const Discount = sequelize.define('Discount', {
 }, {
     sequelize,
     moduleName: 'Discount',
-    tableName: 'discounts',
+    tableName: 'Discounts',
     timestamps: false   
 });
 

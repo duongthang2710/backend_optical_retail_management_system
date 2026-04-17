@@ -15,7 +15,7 @@ const UserAddress = sequelize.define('UserAddress', {
 }, {
     sequelize,
     moduleName: 'UserAddress',
-    tableName: 'user_addresses',
+    tableName: 'User_Addresses',
     timestamps: false   
 });
 

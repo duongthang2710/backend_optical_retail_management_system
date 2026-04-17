@@ -1,6 +1,8 @@
-const { Product } = require("../models/productModel");
-const { ProductVariant } = require("../models/productVariantModel");
+const db = require("../models");
 const { Op } = require("sequelize");
+
+const Product = db.Product;
+const ProductVariant = db.ProductVariant;
 
 class ProductService {
     async getAllProducts(queryFilters) {
@@ -53,7 +55,7 @@ class ProductService {
     }
 
     async createProduct(productData) {
-        const trans = await sequelize.transaction();
+        const trans = await db.sequelize.transaction();
         try {
             const {
                 product_name,
