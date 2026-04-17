@@ -1,5 +1,7 @@
 const db = require("../models");
 const { Op } = require("sequelize");
+const ApiError = require("../utils/ApiError");
+const statusCodes = require("http-status-codes").StatusCodes;
 
 const Product = db.Product;
 const ProductVariant = db.ProductVariant;
@@ -33,6 +35,8 @@ class ProductService {
                 {
                     model: ProductVariant,
                     as: "variants",
+                    where: { stock_quantity: { [Op.gt]: 0 } },
+                    required: false,
                     attributes: [
                         "variant_id",
                         "color",
@@ -94,6 +98,29 @@ class ProductService {
             await trans.rollback();
             throw error;
         }
+    }
+
+    async getProductById(productId) {
+        const ProductById = await Product.findByPk(productId, {
+            include: [
+                {
+                    model: ProductVariant,
+                    as: "variants",
+                    attributes: [
+                        "variant_id",
+                        "color",
+                        "price",
+                        "stock_quantity",
+                        "image",
+                    ]
+                }
+            ]
+        }   
+        )
+        if (!ProductById) {
+            throw new ApiError(statusCodes.NOT_FOUND, "Product not found");
+        }
+        return ProductById;
     }
 }
 
