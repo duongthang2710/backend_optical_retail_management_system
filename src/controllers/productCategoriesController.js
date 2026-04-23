@@ -48,6 +48,25 @@ class ProductController {
             next(error);
         }
     }
+
+    async deleteProduct(req, res, next) {
+        try {
+            const productId = req.params.productId;
+            await productCategoriesService.deleteProduct(productId);
+            return sendResponse(res, 200, "Product deleted successfully");
+        } catch (error) {
+            next(error);
+        }
+    }
+    async deleteVariant(req, res, next) {
+        try {
+            const variantId = req.params.variantId;
+            await productCategoriesService.deleteVariant(variantId);
+            return sendResponse(res, 200, "Variant deleted successfully");
+        } catch (error) {
+            next(error);
+        }
+    }
 }
 
 module.exports = new ProductController();

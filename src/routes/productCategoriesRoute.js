@@ -6,7 +6,8 @@ const {
     validateGetProductsQuery,
     validateCreateProduct,
     validateGetProductById,
-    validateUpdateProduct
+    validateUpdateProduct,
+    validateDeleteVariant
 } = require("../validators/productValidator");
 const { optionalAuth } = require("../middlewares/optionalAuthMiddleware");
 const { authMiddleware, isAdmin } = require("../middlewares/authMiddleware");
@@ -34,8 +35,21 @@ router.post(
 
 router.put(
     "/products/:productId",
-    // isAdmin,
+    isAdmin,
     validateUpdateProduct,
     productController.updateProduct,
+)
+
+router.delete(
+    "/products/:productId",
+    isAdmin,
+    validateGetProductById,
+    productController.deleteProduct,
+)
+
+router.delete("/products/:productId/variants/:variantId",
+    isAdmin,
+    validateDeleteVariant,
+    productController.deleteVariant,
 )
 module.exports = router;

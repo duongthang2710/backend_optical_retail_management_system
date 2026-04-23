@@ -132,9 +132,22 @@ const validateUpdateProduct = (req, res, next) => {
     next();
 }
 
+const validateDeleteVariant = (req, res, next) => {
+    const { variantId } = req.params;
+    if (!variantId || isNaN(variantId) || variantId <= 0) {
+        return next(new ApiError(
+            statusCodes.BAD_REQUEST,
+            "Invalid variant ID. Variant ID must be a positive integer.",
+        ));
+    }
+    next();
+};
+
+
 module.exports = {
     validateGetProductsQuery,
     validateCreateProduct,
     validateGetProductById,
-    validateUpdateProduct
+    validateUpdateProduct,
+    validateDeleteVariant
 };

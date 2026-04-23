@@ -82,7 +82,7 @@ class ProductService {
                 { transaction: trans },
             );
 
-            //thêm variant nếu có
+            //thêm variant
             if (variants && variants.length > 0) {
                 const variantWithId = variants.map((v) => ({
                     ...v,
@@ -186,6 +186,34 @@ class ProductService {
             await trans.rollback();
             throw error;
         }
+    }
+    async deleteProduct(productId) {
+        const product = await Product.findByPk(productId);
+        if (!product) {
+            const error = new ApiError(statusCodes.NOT_FOUND, "Product not found");
+            throw error;
+        }
+        await ProductVariant.destroy(
+            { where: { product_id: productId } }
+        );
+        await product.destroy();
+        return true;
+    }
+    async deleteVariant(variantId) {
+        const variant = await ProductVariant.findByPk(variantId);
+        if (!variant) {
+            const error = new ApiError(statusCodes.NOT_FOUND, "Variant not found");
+            throw error;
+        }
+        const variantCount = await ProductVariant.count({
+            where: { product_id: variant.product_id },
+        });
+        if (variantCount <= 1) {
+            const error = new ApiError(statusCodes.BAD_REQUEST, "At least one variant is required for a product");
+            throw error;
+        }
+        await variant.destroy();
+        return true;
     }
 }
 
