@@ -122,6 +122,71 @@ class ProductService {
         }
         return ProductById;
     }
+
+    async updateProduct(productId, updateData) 
+    {
+        const trans = await db.sequelize.transaction();
+        try {
+            const product = await Product.findByPk(productId);
+            if (!product) {
+                const error = new ApiError(statusCodes.NOT_FOUND, "Product not found");
+                throw error;
+            }
+            const { product_name, category_id, brand_id, material, shape, desc, variants } = updateData;
+            // Cập nhật thông tin sản phẩm
+            await product.update(
+                {
+                    product_name,
+                    category_id,
+                    brand_id,
+                    material,
+                    shape,
+                    desc,
+                },
+                { transaction: trans }
+            );
+            // Xử lý cập nhật variants
+            if (variants && Array.isArray(variants)) {
+                for (const item of variants) {
+                    if (item.variant_id) {
+                        const [affectedRows] = await ProductVariant.update(
+                            {
+                                color: item.color,
+                                price: item.price,
+                                stock_quantity: item.stock_quantity,
+                                image: item.image,
+                            }, {
+                            where: { variants_id: item.variant_id, product_id: productId },
+                            transaction: trans
+                        }
+                        );
+                        if (affectedRows === 0) {
+                            const error = new ApiError(statusCodes.NOT_FOUND, `Variant with ID ${item.variant_id} not found for this product`);
+                            throw error;
+                        }
+                    }
+                    else {
+                        if (!item.color || !item.price || !item.stock_quantity || !item.image) {
+                            const error = new ApiError(statusCodes.BAD_REQUEST, "Missing required fields for new variant");
+                            throw error;
+                        }
+                        await ProductVariant.create(
+                            {
+                                ...item,
+                                product_id: productId,
+                            },
+                            { transaction: trans }
+                        );
+                    }
+                }
+            }
+            await trans.commit();
+            return true;
+        } catch (error) {
+            await trans.rollback();
+            throw error;
+        }
+    }
 }
 
 module.exports = new ProductService();

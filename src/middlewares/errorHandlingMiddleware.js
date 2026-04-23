@@ -6,7 +6,7 @@
  */
 
 /* eslint-disable no-unused-vars */
-statusCodes = require("http-status-codes").StatusCodes;
+const { StatusCodes } = require("http-status-codes");
 // import { env } from '~/config/environment'
 
 // Middleware xử lý lỗi tập trung trong ứng dụng Back-end NodeJS (ExpressJS)

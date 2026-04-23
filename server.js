@@ -30,6 +30,8 @@ app.use((req, res) => {
     });
 });
 
+app.use(errorHandlingMiddleware);
+
 app.use((err, req, res, next) => {
     if (res.headersSent) {
         return next(err);
@@ -53,7 +55,6 @@ app.use((err, req, res, next) => {
     });
 });
 
-app.use(errorHandlingMiddleware);
 
 if (require.main === module) {
     app.listen(port, () => {

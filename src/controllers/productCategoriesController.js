@@ -1,34 +1,53 @@
 const productCategoriesService = require("../services/productCategoriesService");
-const {sendResponse} = require("../utils/responseHandler");
-class ProductController{
-    async getAllProducts(req, res) {
+const { sendResponse } = require("../utils/responseHandler");
+class ProductController {
+    async getAllProducts(req, res, next) {
         try {
-            const result = await productCategoriesService.getAllProducts(req.query);
+            const result = await productCategoriesService.getAllProducts(
+                req.query,
+            );
             return sendResponse(res, 200, "Get products successfully", result);
-        }
-        catch (error) {
-            return sendResponse(res, 500, "Server error:" + error.message);
-        }
-    };
-    async getProductById(req, res) {
-        try {
-            const result = await productCategoriesService.getProductById(req.params.productId);
-            return sendResponse(res, 200, "Get product successfully", result);
-        }
-        catch (error) {
+        } catch (error) {
             next(error);
         }
-    };
-    async createProduct(req, res) {
+    }
+    async getProductById(req, res, next) {
         try {
-            const newProduct = await productCategoriesService.createProduct(req.body);
-            return sendResponse(res, 201, "Product created successfully", { product_name: newProduct.product_name });
+            const result = await productCategoriesService.getProductById(
+                req.params.productId,
+            );
+            return sendResponse(res, 200, "Get product successfully", result);
+        } catch (error) {
+            next(error);
         }
-        catch (error) {
-            return sendResponse(res, 500, "Server error:" + error.message);
+    }
+    async createProduct(req, res, next) {
+        try {
+            const newProduct = await productCategoriesService.createProduct(
+                req.body,
+            );
+            return sendResponse(res, 201, "Product created successfully", {
+                product_name: newProduct.product_name,
+            });
+        } catch (error) {
+            next(error);
         }
-    };
-
+    }
+    async updateProduct(req, res, next) {
+        try {
+            const productId = req.params.productId;
+            const updateData = req.body;
+            const updatedProduct = await productCategoriesService.updateProduct(
+                productId,
+                updateData,
+            );
+            return sendResponse(res, 200, "Product updated successfully", {
+                product_name: updatedProduct.product_name,
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
 }
 
 module.exports = new ProductController();
