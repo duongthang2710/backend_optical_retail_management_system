@@ -6,6 +6,7 @@ const morgan = require("morgan");
 
 const authRoute = require("./src/routes/authRoute");
 const adminRoute = require("./src/routes/adminRoute");
+const cartRoute = require("./src/routes/cartRoute");
 const productCategoriesRoute = require("./src/routes/productCategoriesRoute");
 const {
     errorHandlingMiddleware,
@@ -34,6 +35,7 @@ app.get("/", (req, res) => {
 
 app.use("/auth", authRoute);
 app.use("/admin", adminRoute);
+app.use("/cart", cartRoute);
 app.use("/", productCategoriesRoute);
 app.use((req, res) => {
     res.status(404).json({
