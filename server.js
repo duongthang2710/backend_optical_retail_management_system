@@ -11,8 +11,17 @@ const {
 } = require("./src/middlewares/errorHandlingMiddleware");
 const app = express();
 const port = process.env.PORT || 3000;
+const allowedOrigins = (process.env.CORS_ORIGIN || "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
 
-app.use(cors());
+app.use(
+    cors({
+        origin: allowedOrigins.length ? allowedOrigins : true,
+        credentials: true,
+    }),
+);
 app.use(morgan("dev"));
 app.use(express.json());
 
@@ -31,30 +40,6 @@ app.use((req, res) => {
 });
 
 app.use(errorHandlingMiddleware);
-
-app.use((err, req, res, next) => {
-    if (res.headersSent) {
-        return next(err);
-    }
-
-    if (err && err.type === "entity.parse.failed") {
-        return res.status(400).json({
-            message: "Invalid JSON payload",
-        });
-    }
-
-    const statusCode = err.status || 500;
-    const message = statusCode >= 500 ? "Internal server error" : err.message;
-
-    if (statusCode >= 500) {
-        console.error(err);
-    }
-
-    return res.status(statusCode).json({
-        message,
-    });
-});
-
 
 if (require.main === module) {
     app.listen(port, () => {

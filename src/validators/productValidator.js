@@ -3,7 +3,7 @@ const ApiError = require("../utils/ApiError");
 const statusCodes = require("http-status-codes").StatusCodes;
 
 const validateGetProductsQuery = (req, res, next) => {
-    const { page, limit, material, color, price } = req.query;
+    const { page, limit, price } = req.query;
 
     // Kiểm tra page
     if (page && (isNaN(page) || page <= 0)) {
@@ -27,6 +27,16 @@ const validateGetProductsQuery = (req, res, next) => {
         }
     }
 
+    if (price !== undefined && price !== null && price !== "") {
+        if (isNaN(price) || Number(price) < 0) {
+            return sendResponse(
+                res,
+                400,
+                "Invalid price. Price must be a non-negative number.",
+            );
+        }
+    }
+
     return next();
 };
 
@@ -42,7 +52,12 @@ const validateCreateProduct = (req, res, next) => {
     for (const v of variants) {
         if (!v.color)
             return sendResponse(res, 400, "Variant color if required.");
-        if (!v.price || isNaN(v.price) || v.price <= 0) {
+        if (
+            v.price === undefined ||
+            v.price === null ||
+            isNaN(v.price) ||
+            Number(v.price) <= 0
+        ) {
             return sendResponse(
                 res,
                 400,
@@ -50,9 +65,10 @@ const validateCreateProduct = (req, res, next) => {
             );
         }
         if (
-            !v.stock_quantity ||
+            v.stock_quantity === undefined ||
+            v.stock_quantity === null ||
             isNaN(v.stock_quantity) ||
-            v.stock_quantity < 0
+            Number(v.stock_quantity) < 0
         ) {
             return sendResponse(
                 res,
@@ -87,7 +103,7 @@ const validateUpdateProduct = (req, res, next) => {
     if (!productId || isNaN(productId) || productId <= 0) {
         return next(
             new ApiError(
-                statusCodes.BAD_REQUEST, 
+                statusCodes.BAD_REQUEST,
                 "Invalid product ID. Product ID must be a positive integer.",
             ),
         );
@@ -101,10 +117,9 @@ const validateUpdateProduct = (req, res, next) => {
                 ),
             );
         }
-        
+
         for (const item of variants) {
-            if (item.price !== undefined) 
-            {
+            if (item.price !== undefined) {
                 if (isNaN(item.price) || item.price < 0) {
                     return next(
                         new ApiError(
@@ -125,29 +140,28 @@ const validateUpdateProduct = (req, res, next) => {
                     );
                 }
             }
-            
-
         }
-    }
-    next();
-}
-
-const validateDeleteVariant = (req, res, next) => {
-    const { variantId } = req.params;
-    if (!variantId || isNaN(variantId) || variantId <= 0) {
-        return next(new ApiError(
-            statusCodes.BAD_REQUEST,
-            "Invalid variant ID. Variant ID must be a positive integer.",
-        ));
     }
     next();
 };
 
+const validateDeleteVariant = (req, res, next) => {
+    const { variantId } = req.params;
+    if (!variantId || isNaN(variantId) || variantId <= 0) {
+        return next(
+            new ApiError(
+                statusCodes.BAD_REQUEST,
+                "Invalid variant ID. Variant ID must be a positive integer.",
+            ),
+        );
+    }
+    next();
+};
 
 module.exports = {
     validateGetProductsQuery,
     validateCreateProduct,
     validateGetProductById,
     validateUpdateProduct,
-    validateDeleteVariant
+    validateDeleteVariant,
 };

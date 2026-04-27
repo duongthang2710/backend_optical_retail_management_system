@@ -8,8 +8,26 @@ const ProductVariant = db.ProductVariant;
 
 class ProductService {
     async getAllProducts(queryFilters) {
-        const { material, shape, keyword, page = 1, limit = 10 } = queryFilters;
+        const { material, shape, keyword } = queryFilters;
+        const page =
+            Number(queryFilters.page) > 0 ? Number(queryFilters.page) : 1;
+        const limit =
+            Number(queryFilters.limit) > 0 ? Number(queryFilters.limit) : 10;
+        const hasPriceFilter =
+            queryFilters.price !== undefined &&
+            queryFilters.price !== null &&
+            queryFilters.price !== "";
+        const maxPrice = hasPriceFilter ? Number(queryFilters.price) : null;
+
+        if (hasPriceFilter && Number.isNaN(maxPrice)) {
+            throw new ApiError(
+                statusCodes.BAD_REQUEST,
+                "Price must be a valid number",
+            );
+        }
+
         let whereConditions = {};
+        const variantWhereConditions = { stock_quantity: { [Op.gt]: 0 } };
 
         // Tìm kiếm theo tên sản phẩm
         if (keyword) {
@@ -23,11 +41,12 @@ class ProductService {
         if (shape) {
             whereConditions.shape = shape;
         }
-        if (queryFilters.price) {
-            whereConditions.price = { [Op.lte]: queryFilters.price };
+        if (hasPriceFilter) {
+            variantWhereConditions.price = { [Op.lte]: maxPrice };
         }
+
         // Xử lý phân trang
-        const offset = (Number(page) - 1) * Number(limit);
+        const offset = (page - 1) * limit;
         // Truy vấn DB
         const { count, rows } = await Product.findAndCountAll({
             where: whereConditions,
@@ -35,8 +54,8 @@ class ProductService {
                 {
                     model: ProductVariant,
                     as: "variants",
-                    where: { stock_quantity: { [Op.gt]: 0 } },
-                    required: false,
+                    where: variantWhereConditions,
+                    required: hasPriceFilter,
                     attributes: [
                         "variant_id",
                         "color",
@@ -46,7 +65,7 @@ class ProductService {
                     ],
                 },
             ],
-            limit: Number(limit),
+            limit,
             offset: offset,
             distinct: true,
         });
@@ -112,39 +131,52 @@ class ProductService {
                         "price",
                         "stock_quantity",
                         "image",
-                    ]
-                }
-            ]
-        }   
-        )
+                    ],
+                },
+            ],
+        });
         if (!ProductById) {
             throw new ApiError(statusCodes.NOT_FOUND, "Product not found");
         }
         return ProductById;
     }
 
-    async updateProduct(productId, updateData) 
-    {
+    async updateProduct(productId, updateData) {
         const trans = await db.sequelize.transaction();
         try {
-            const product = await Product.findByPk(productId);
+            const product = await Product.findByPk(productId, {
+                transaction: trans,
+            });
             if (!product) {
-                const error = new ApiError(statusCodes.NOT_FOUND, "Product not found");
+                const error = new ApiError(
+                    statusCodes.NOT_FOUND,
+                    "Product not found",
+                );
                 throw error;
             }
-            const { product_name, category_id, brand_id, material, shape, desc, variants } = updateData;
+            const {
+                product_name,
+                category_id,
+                brand_id,
+                material,
+                shape,
+                desc,
+                variants,
+            } = updateData;
+            const productUpdatePayload = {};
+            if (product_name !== undefined)
+                productUpdatePayload.product_name = product_name;
+            if (category_id !== undefined)
+                productUpdatePayload.category_id = category_id;
+            if (brand_id !== undefined)
+                productUpdatePayload.brand_id = brand_id;
+            if (material !== undefined)
+                productUpdatePayload.material = material;
+            if (shape !== undefined) productUpdatePayload.shape = shape;
+            if (desc !== undefined) productUpdatePayload.desc = desc;
+
             // Cập nhật thông tin sản phẩm
-            await product.update(
-                {
-                    product_name,
-                    category_id,
-                    brand_id,
-                    material,
-                    shape,
-                    desc,
-                },
-                { transaction: trans }
-            );
+            await product.update(productUpdatePayload, { transaction: trans });
             // Xử lý cập nhật variants
             if (variants && Array.isArray(variants)) {
                 for (const item of variants) {
@@ -155,19 +187,33 @@ class ProductService {
                                 price: item.price,
                                 stock_quantity: item.stock_quantity,
                                 image: item.image,
-                            }, {
-                            where: { variants_id: item.variant_id, product_id: productId },
-                            transaction: trans
-                        }
+                            },
+                            {
+                                where: {
+                                    variant_id: item.variant_id,
+                                    product_id: productId,
+                                },
+                                transaction: trans,
+                            },
                         );
                         if (affectedRows === 0) {
-                            const error = new ApiError(statusCodes.NOT_FOUND, `Variant with ID ${item.variant_id} not found for this product`);
+                            const error = new ApiError(
+                                statusCodes.NOT_FOUND,
+                                `Variant with ID ${item.variant_id} not found for this product`,
+                            );
                             throw error;
                         }
-                    }
-                    else {
-                        if (!item.color || !item.price || !item.stock_quantity || !item.image) {
-                            const error = new ApiError(statusCodes.BAD_REQUEST, "Missing required fields for new variant");
+                    } else {
+                        if (
+                            !item.color ||
+                            item.price === undefined ||
+                            item.stock_quantity === undefined ||
+                            !item.image
+                        ) {
+                            const error = new ApiError(
+                                statusCodes.BAD_REQUEST,
+                                "Missing required fields for new variant",
+                            );
                             throw error;
                         }
                         await ProductVariant.create(
@@ -175,13 +221,13 @@ class ProductService {
                                 ...item,
                                 product_id: productId,
                             },
-                            { transaction: trans }
+                            { transaction: trans },
                         );
                     }
                 }
             }
             await trans.commit();
-            return true;
+            return this.getProductById(productId);
         } catch (error) {
             await trans.rollback();
             throw error;
@@ -190,26 +236,33 @@ class ProductService {
     async deleteProduct(productId) {
         const product = await Product.findByPk(productId);
         if (!product) {
-            const error = new ApiError(statusCodes.NOT_FOUND, "Product not found");
+            const error = new ApiError(
+                statusCodes.NOT_FOUND,
+                "Product not found",
+            );
             throw error;
         }
-        await ProductVariant.destroy(
-            { where: { product_id: productId } }
-        );
+        await ProductVariant.destroy({ where: { product_id: productId } });
         await product.destroy();
         return true;
     }
     async deleteVariant(variantId) {
         const variant = await ProductVariant.findByPk(variantId);
         if (!variant) {
-            const error = new ApiError(statusCodes.NOT_FOUND, "Variant not found");
+            const error = new ApiError(
+                statusCodes.NOT_FOUND,
+                "Variant not found",
+            );
             throw error;
         }
         const variantCount = await ProductVariant.count({
             where: { product_id: variant.product_id },
         });
         if (variantCount <= 1) {
-            const error = new ApiError(statusCodes.BAD_REQUEST, "At least one variant is required for a product");
+            const error = new ApiError(
+                statusCodes.BAD_REQUEST,
+                "At least one variant is required for a product",
+            );
             throw error;
         }
         await variant.destroy();

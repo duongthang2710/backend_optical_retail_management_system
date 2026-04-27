@@ -224,13 +224,15 @@ Authorization: Bearer <accessToken>
 POST /auth/refresh-token
 ```
 
-Body:
+Cookie:
 
-```json
-{
-    "refreshToken": "your_refresh_token"
-}
+```text
+refreshToken=<httpOnly_cookie>
 ```
+
+Luu y:
+
+- API ho tro fallback nhan `refreshToken` trong body de tuong thich client cu.
 
 ### 5. Forgot Password
 
@@ -296,8 +298,9 @@ Body:
 
 ## Auth Notes
 
-- Du lieu user hien dang luu bang in-memory store.
-- Khi restart server, toan bo user, OTP va refresh token se bi reset.
+- Du lieu user duoc luu trong MySQL thong qua Sequelize.
+- Refresh token va OTP reset password hien tai duoc luu in-memory tai repository layer.
+- Khi restart server, OTP va refresh token se bi reset.
 - Moi user chi co 1 refresh token active tai mot thoi diem.
 - Sau `logout`, `reset-password`, `change-password`, refresh token cu se mat hieu luc.
 

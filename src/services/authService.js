@@ -1,15 +1,16 @@
 const bcrypt = require("bcryptjs");
 
 const {
+    getUserByEmail,
+    getUserById,
+    createUser,
+    updateUserRefreshToken,
     clearPasswordResetOtp,
     clearUserRefreshToken,
-    createUser,
-    findUserByEmail,
-    findUserById,
     storePasswordResetOtp,
     updateUserPassword,
-    updateUserRefreshToken,
-} = require("../models/userModel");
+} = require("./userService");
+const { USER_ROLES } = require("../models/userModel");
 const { sendPasswordResetOtp } = require("../utils/mailer");
 const { createOtpPayload, hashOtp, isOtpExpired } = require("../utils/otp");
 const { rotateTokens, verifyRefreshToken } = require("../utils/token");
@@ -26,18 +27,18 @@ const toPublicUser = (user) => ({
 });
 
 const registerUser = async ({ fullName, email, phone, password }) => {
-    const existingUser = findUserByEmail(email);
+    const existingUser = await getUserByEmail(email);
     if (existingUser) {
         throw createHttpError(409, "Email already exists");
     }
 
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
-    const user = createUser({
+    const user = await createUser({
         fullName,
         email,
         phone,
         passwordHash,
-        role: "customer",
+        role: USER_ROLES.CUSTOMER,
     });
 
     return {
@@ -48,7 +49,7 @@ const registerUser = async ({ fullName, email, phone, password }) => {
 };
 
 const loginUser = async ({ email, password }) => {
-    const user = findUserByEmail(email);
+    const user = await getUserByEmail(email);
     if (!user) {
         throw createHttpError(404, "User not found");
     }
@@ -59,7 +60,7 @@ const loginUser = async ({ email, password }) => {
     }
 
     const { accessToken, refreshToken } = rotateTokens(user);
-    updateUserRefreshToken(user.id, refreshToken);
+    await updateUserRefreshToken(user.id, refreshToken);
 
     return {
         accessToken,
@@ -69,7 +70,7 @@ const loginUser = async ({ email, password }) => {
 };
 
 const logoutUser = async (userId) => {
-    clearUserRefreshToken(userId);
+    await clearUserRefreshToken(userId);
 
     return {
         message: "Logged out",
@@ -88,7 +89,7 @@ const refreshUserToken = async (incomingRefreshToken) => {
         throw createHttpError(401, "Invalid or expired refresh token");
     }
 
-    const user = findUserById(payload.sub);
+    const user = await getUserById(payload.sub);
     if (
         !user ||
         !user.refreshToken ||
@@ -98,19 +99,19 @@ const refreshUserToken = async (incomingRefreshToken) => {
     }
 
     const tokens = rotateTokens(user);
-    updateUserRefreshToken(user.id, tokens.refreshToken);
+    await updateUserRefreshToken(user.id, tokens.refreshToken);
 
     return tokens;
 };
 
 const forgotPassword = async ({ email }) => {
-    const user = findUserByEmail(email);
+    const user = await getUserByEmail(email);
     if (!user) {
         throw createHttpError(404, "User not found");
     }
 
     const { otp, otpHash, expiresAt } = createOtpPayload();
-    storePasswordResetOtp(user.id, {
+    await storePasswordResetOtp(user.id, {
         otpHash,
         expiresAt,
     });
@@ -122,7 +123,7 @@ const forgotPassword = async ({ email }) => {
             otp,
         });
     } catch (error) {
-        clearPasswordResetOtp(user.id);
+        await clearPasswordResetOtp(user.id);
         throw error;
     }
 
@@ -132,7 +133,7 @@ const forgotPassword = async ({ email }) => {
 };
 
 const resetPassword = async ({ email, otp, newPassword }) => {
-    const user = findUserByEmail(email);
+    const user = await getUserByEmail(email);
     if (!user) {
         throw createHttpError(404, "User not found");
     }
@@ -142,7 +143,7 @@ const resetPassword = async ({ email, otp, newPassword }) => {
     }
 
     if (isOtpExpired(user.resetOtpExpiresAt)) {
-        clearPasswordResetOtp(user.id);
+        await clearPasswordResetOtp(user.id);
         throw createHttpError(400, "OTP is invalid or expired");
     }
 
@@ -151,9 +152,9 @@ const resetPassword = async ({ email, otp, newPassword }) => {
     }
 
     const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
-    updateUserPassword(user.id, passwordHash);
-    clearPasswordResetOtp(user.id);
-    clearUserRefreshToken(user.id);
+    await updateUserPassword(user.id, passwordHash);
+    await clearPasswordResetOtp(user.id);
+    await clearUserRefreshToken(user.id);
 
     return {
         message: "Password reset",
@@ -161,7 +162,7 @@ const resetPassword = async ({ email, otp, newPassword }) => {
 };
 
 const changePassword = async ({ userId, currentPassword, newPassword }) => {
-    const user = findUserById(userId);
+    const user = await getUserById(userId);
     if (!user) {
         throw createHttpError(401, "Invalid or expired token");
     }
@@ -182,8 +183,8 @@ const changePassword = async ({ userId, currentPassword, newPassword }) => {
     }
 
     const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
-    updateUserPassword(user.id, passwordHash);
-    clearUserRefreshToken(user.id);
+    await updateUserPassword(user.id, passwordHash);
+    await clearUserRefreshToken(user.id);
 
     return {
         message: "Changed",
