@@ -46,13 +46,49 @@ const User = sequelize.define(
             allowNull: false,
             defaultValue: USER_ROLES.CUSTOMER,
         },
+        reset_otp_hash: {
+            type: DataTypes.STRING(255),
+            allowNull: true,
+        },
+        reset_otp_expires_at: {
+            type: DataTypes.DATE,
+            allowNull: true,
+        },
+        is_active: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: true,
+        },
     },
     {
         sequelize,
         tableName: "Users",
-        timestamps: false,
+        timestamps: true,
+        createdAt: "created_at",
+        updatedAt: "updated_at",
     },
 );
+
+User.associate = (models) => {
+    if (models.UserAddress) {
+        User.hasMany(models.UserAddress, {
+            foreignKey: "user_id",
+            as: "user_addresses",
+        });
+    }
+    if (models.Order) {
+        User.hasMany(models.Order, {
+            foreignKey: "user_id",
+            as: "orders",
+        });
+    }
+    if (models.Comment) {
+        User.hasMany(models.Comment, {
+            foreignKey: "user_id",
+            as: "comments",
+        });
+    }
+};
 
 module.exports = {
     User,

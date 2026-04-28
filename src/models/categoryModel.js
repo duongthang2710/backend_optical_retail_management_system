@@ -1,30 +1,43 @@
-const sequelize = require('../config/database');
-const { DataTypes } = require('sequelize');
+const sequelize = require("../config/database");
+const { DataTypes } = require("sequelize");
 
-const Category = sequelize.define('Category', {
-    category_id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true
+const Category = sequelize.define(
+    "Category",
+    {
+        category_id: {
+            type: DataTypes.INTEGER,
+            primaryKey: true,
+            autoIncrement: true,
+        },
+        category_name: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        desc: {
+            type: DataTypes.TEXT,
+        },
+        is_active: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: true,
+        },
     },
-    category_name: {
-        type: DataTypes.STRING, 
-        allowNull: false
+    {
+        sequelize,
+        tableName: "Categories",
+        timestamps: true,
+        createdAt: "created_at",
+        updatedAt: "updated_at",
     },
-    desc: {
-        type: DataTypes.TEXT
-    }
-}, {
-    sequelize,
-    moduleName: 'Category',
-    tableName: 'Categories',
-    timestamps: false   
-});
+);
 
 Category.associate = (models) => {
-    Category.hasMany(models.Product, { foreignKey: 'category_id', as: 'products' });
+    Category.hasMany(models.Product, {
+        foreignKey: "category_id",
+        as: "products",
+    });
 };
 
 module.exports = {
-    Category
+    Category,
 };
