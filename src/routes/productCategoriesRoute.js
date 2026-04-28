@@ -26,6 +26,13 @@ router.get(
     productController.getProductById,
 );
 
+router.get(
+    "/products/:productId/related",
+    optionalAuth,
+    validateGetProductById,
+    productController.getRelatedProducts,
+);
+
 router.post(
     "/products",
     authMiddleware,

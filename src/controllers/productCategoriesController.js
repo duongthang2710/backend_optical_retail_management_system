@@ -21,6 +21,23 @@ class ProductController {
             next(error);
         }
     }
+    async getRelatedProducts(req, res, next) {
+        try {
+            const limit = req.query.limit ? Number(req.query.limit) : 8;
+            const result = await productCategoriesService.getRelatedProducts(
+                req.params.productId,
+                limit,
+            );
+            return sendResponse(
+                res,
+                200,
+                "Get related products successfully",
+                result,
+            );
+        } catch (error) {
+            next(error);
+        }
+    }
     async createProduct(req, res, next) {
         try {
             const newProduct = await productCategoriesService.createProduct(

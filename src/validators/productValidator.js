@@ -2,39 +2,88 @@ const { sendResponse } = require("../utils/responseHandler");
 const ApiError = require("../utils/ApiError");
 const statusCodes = require("http-status-codes").StatusCodes;
 
-const validateGetProductsQuery = (req, res, next) => {
-    const { page, limit, price } = req.query;
+const VALID_SORT = new Set([
+    "newest",
+    "oldest",
+    "price_asc",
+    "price_desc",
+    "name_asc",
+    "name_desc",
+]);
 
-    // Kiểm tra page
-    if (page && (isNaN(page) || page <= 0)) {
+const isPositiveNumber = (value) =>
+    !isNaN(value) && Number(value) >= 0;
+
+const validateGetProductsQuery = (req, res, next) => {
+    const {
+        page,
+        limit,
+        price,
+        min_price,
+        max_price,
+        category_id,
+        brand_id,
+        sort,
+    } = req.query;
+
+    if (page && (isNaN(page) || Number(page) <= 0)) {
         return sendResponse(
             res,
             400,
             "Invalid page number. Page must be a positive integer.",
         );
     }
-    // Kiểm tra limit
     if (limit) {
-        if (isNaN(limit) || limit <= 0) {
+        if (isNaN(limit) || Number(limit) <= 0) {
             return sendResponse(
                 res,
                 400,
                 "Invalid limit. Limit must be a positive integer.",
             );
         }
-        if (limit > 100) {
+        if (Number(limit) > 100) {
             return sendResponse(res, 400, "Limit cannot exceed 100.");
         }
     }
 
-    if (price !== undefined && price !== null && price !== "") {
-        if (isNaN(price) || Number(price) < 0) {
-            return sendResponse(
-                res,
-                400,
-                "Invalid price. Price must be a non-negative number.",
-            );
+    for (const [key, val] of Object.entries({ price, min_price, max_price })) {
+        if (val !== undefined && val !== null && val !== "") {
+            if (!isPositiveNumber(val)) {
+                return sendResponse(
+                    res,
+                    400,
+                    `Invalid ${key}. Must be a non-negative number.`,
+                );
+            }
         }
+    }
+
+    if (
+        min_price &&
+        max_price &&
+        Number(min_price) > Number(max_price)
+    ) {
+        return sendResponse(res, 400, "min_price must be <= max_price");
+    }
+
+    for (const [key, val] of Object.entries({ category_id, brand_id })) {
+        if (val !== undefined && val !== "") {
+            if (isNaN(val) || Number(val) <= 0) {
+                return sendResponse(
+                    res,
+                    400,
+                    `Invalid ${key}. Must be a positive integer.`,
+                );
+            }
+        }
+    }
+
+    if (sort && !VALID_SORT.has(sort)) {
+        return sendResponse(
+            res,
+            400,
+            `Invalid sort. Allowed: ${Array.from(VALID_SORT).join(", ")}`,
+        );
     }
 
     return next();
