@@ -4,9 +4,7 @@ const {
     getUserByEmail,
     getUserById,
     createUser,
-    updateUserRefreshToken,
     clearPasswordResetOtp,
-    clearUserRefreshToken,
     storePasswordResetOtp,
     updateUserPassword,
 } = require("./userService");
@@ -25,6 +23,12 @@ const toPublicUser = (user) => ({
     phone: user.phone,
     role: user.role,
 });
+
+const ensureActiveUser = (user) => {
+    if (user && user.isActive === false) {
+        throw createHttpError(403, "User account is inactive");
+    }
+};
 
 const registerUser = async ({ fullName, email, phone, password }) => {
     const existingUser = await getUserByEmail(email);
@@ -54,13 +58,14 @@ const loginUser = async ({ email, password }) => {
         throw createHttpError(404, "User not found");
     }
 
+    ensureActiveUser(user);
+
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
     if (!isPasswordValid) {
         throw createHttpError(401, "Invalid email or password");
     }
 
     const { accessToken, refreshToken } = rotateTokens(user);
-    await updateUserRefreshToken(user.id, refreshToken);
 
     return {
         accessToken,
@@ -69,9 +74,7 @@ const loginUser = async ({ email, password }) => {
     };
 };
 
-const logoutUser = async (userId) => {
-    await clearUserRefreshToken(userId);
-
+const logoutUser = async () => {
     return {
         message: "Logged out",
     };
@@ -90,16 +93,12 @@ const refreshUserToken = async (incomingRefreshToken) => {
     }
 
     const user = await getUserById(payload.sub);
-    if (
-        !user ||
-        !user.refreshToken ||
-        user.refreshToken !== incomingRefreshToken
-    ) {
+    if (!user) {
         throw createHttpError(401, "Invalid or expired refresh token");
     }
+    ensureActiveUser(user);
 
     const tokens = rotateTokens(user);
-    await updateUserRefreshToken(user.id, tokens.refreshToken);
 
     return tokens;
 };
@@ -154,7 +153,6 @@ const resetPassword = async ({ email, otp, newPassword }) => {
     const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
     await updateUserPassword(user.id, passwordHash);
     await clearPasswordResetOtp(user.id);
-    await clearUserRefreshToken(user.id);
 
     return {
         message: "Password reset",
@@ -184,7 +182,6 @@ const changePassword = async ({ userId, currentPassword, newPassword }) => {
 
     const passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
     await updateUserPassword(user.id, passwordHash);
-    await clearUserRefreshToken(user.id);
 
     return {
         message: "Changed",

@@ -10,6 +10,10 @@ const cartRoute = require("./src/routes/cartRoute");
 const productCategoriesRoute = require("./src/routes/productCategoriesRoute");
 const categoryRoute = require("./src/routes/categoryRoute");
 const brandRoute = require("./src/routes/brandRoute");
+const addressRoute = require("./src/routes/addressRoute");
+const discountRoute = require("./src/routes/discountRoute");
+const orderRoute = require("./src/routes/orderRoute");
+const commentRoute = require("./src/routes/commentRoute");
 const {
     errorHandlingMiddleware,
 } = require("./src/middlewares/errorHandlingMiddleware");
@@ -38,6 +42,10 @@ app.get("/", (req, res) => {
 app.use("/auth", authRoute);
 app.use("/admin", adminRoute);
 app.use("/cart", cartRoute);
+app.use("/addresses", addressRoute);
+app.use("/discounts", discountRoute);
+app.use("/orders", orderRoute);
+app.use("/", commentRoute);
 app.use("/", productCategoriesRoute);
 app.use("/", categoryRoute);
 app.use("/", brandRoute);

@@ -1,35 +1,56 @@
-const sequelize = require('../config/database');
-const { DataTypes } = require('sequelize');
+const sequelize = require("../config/database");
+const { DataTypes } = require("sequelize");
 
-const Address = sequelize.define('Address', {
-    address_id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true
+const Address = sequelize.define(
+    "Address",
+    {
+        address_id: {
+            type: DataTypes.INTEGER,
+            primaryKey: true,
+            autoIncrement: true,
+        },
+        city: {
+            type: DataTypes.STRING(255),
+            allowNull: false,
+        },
+        street: {
+            type: DataTypes.STRING(255),
+            allowNull: false,
+        },
+        specifiable_address: {
+            type: DataTypes.TEXT,
+            allowNull: true,
+        },
+        is_active: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: true,
+        },
     },
-    city: {
-        type: DataTypes.STRING(255),
-        allowNull: false
+    {
+        sequelize,
+        tableName: "Address",
+        timestamps: true,
+        createdAt: "created_at",
+        updatedAt: "updated_at",
     },
-    street: {
-        type: DataTypes.STRING(255),
-        allowNull: false
-    }, 
-    specifiable_address: {
-        type: DataTypes.TEXT,
-        allowNull: true
-    }
-}, {
-    sequelize,
-    moduleName: 'Address',
-    tableName: 'Address',
-    timestamps: false   
-});
+);
 
 Address.associate = (models) => {
-    Address.hasMany(models.UserAddress, { foreignKey: 'address_id', as: 'user_addresses' });
-}
+    if (models.UserAddress) {
+        Address.hasMany(models.UserAddress, {
+            foreignKey: "address_id",
+            as: "user_addresses",
+        });
+    }
+    if (models.Order) {
+        Address.hasMany(models.Order, {
+            foreignKey: "address_id",
+            as: "orders",
+        });
+    }
+};
 
 module.exports = {
-    Address
+    Address,
 };
