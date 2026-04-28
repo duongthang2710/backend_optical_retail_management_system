@@ -1,11 +1,6 @@
 const bcrypt = require("bcryptjs");
 
-const {
-    getUserByEmail,
-    getUserById,
-    updateUserRefreshToken,
-    clearUserRefreshToken,
-} = require("./userService");
+const { getUserByEmail, getUserById } = require("./userService");
 const { USER_ROLES } = require("../models/userModel");
 const { rotateTokens, verifyRefreshToken } = require("../utils/token");
 const createHttpError = require("../utils/httpError");
@@ -24,6 +19,9 @@ class AdminService {
     ensureAdmin(user) {
         if (!user || user.role !== USER_ROLES.ADMIN) {
             throw createHttpError(403, "Forbidden: Admins only");
+        }
+        if (user.isActive === false) {
+            throw createHttpError(403, "Admin account is inactive");
         }
     }
 
@@ -44,7 +42,6 @@ class AdminService {
         }
 
         const { accessToken, refreshToken } = rotateTokens(user);
-        await updateUserRefreshToken(user.id, refreshToken);
 
         return {
             accessToken,
@@ -56,8 +53,6 @@ class AdminService {
     async logoutAdmin(userId) {
         const user = await getUserById(userId);
         this.ensureAdmin(user);
-
-        await clearUserRefreshToken(userId);
 
         return {
             message: "Logged out",
@@ -79,12 +74,7 @@ class AdminService {
         const user = await getUserById(payload.sub);
         this.ensureAdmin(user);
 
-        if (!user.refreshToken || user.refreshToken !== incomingRefreshToken) {
-            throw createHttpError(401, "Invalid or expired refresh token");
-        }
-
         const tokens = rotateTokens(user);
-        await updateUserRefreshToken(user.id, tokens.refreshToken);
 
         return {
             ...tokens,

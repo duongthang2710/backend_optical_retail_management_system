@@ -25,12 +25,15 @@ const ProductOrder = sequelize.define(
         discount_amount: {
             type: DataTypes.INTEGER,
             allowNull: true,
+            defaultValue: 0,
         },
     },
     {
         sequelize,
         tableName: "Product_Order",
-        timestamps: false,
+        timestamps: true,
+        createdAt: "created_at",
+        updatedAt: false,
     },
 );
 

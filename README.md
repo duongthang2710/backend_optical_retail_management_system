@@ -43,21 +43,30 @@ Backend Node.js Express cho he thong quan ly cua hang kinh. Hien tai repo da tri
 
 Da trien khai:
 
-- Authentication API
-    - Register
-    - Login
-    - Logout
-    - Refresh token
-    - Forgot password
-    - Reset password
-    - Change password
+- Authentication API: Register, Login, Logout, Refresh token, Forgot/Reset/Change password
+- Admin auth (login/logout/refresh/profile)
+- Product/Category/Brand: CRUD (admin) + list/detail (public)
+- Cart: dung bang `Orders` voi `status='Cart'` (add/update/remove/clear)
+- Address: CRUD dia chi cua user
+- Discount: CRUD + gan/bo discount cho product
+- Order: checkout (cart -> order), list/detail/cancel cho user; admin list, update status, mark paid
+- Comment / rating: CRUD review san pham (chi user da mua)
 
-Chua trien khai:
+API endpoints chinh:
 
-- Admin
-- Cart
-- Order Payment
-- Product Categories
+```text
+Auth        : /auth/{register,login,logout,refresh-token,forgot-password,reset-password,change-password}
+Admin       : /admin/{login,logout,refresh-token,me}
+Products    : GET|POST|PUT|DELETE /products[/...]
+Categories  : GET|POST|PUT|DELETE /categories[/...]
+Brands      : GET|POST|PUT|DELETE /brands[/...]
+Cart        : GET|POST|PUT|DELETE /cart[/items/:variantId]
+Addresses   : GET|POST|PUT|DELETE /addresses[/:id]   (auth)
+Discounts   : GET|POST|PUT|DELETE /discounts[/:id]; POST|DELETE /discounts/:id/products/:productId
+Orders      : POST /orders/checkout; GET /orders, /orders/:id; POST /orders/:id/cancel
+              Admin: GET /orders/admin/all, /orders/admin/:id; PATCH /orders/admin/:id/status, /orders/admin/:id/mark-paid
+Comments    : GET /variants/:variantId/comments, /comments/:id; POST|PUT|DELETE /comments[/:id] (auth)
+```
 
 ## Project Structure
 

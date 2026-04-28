@@ -9,6 +9,14 @@ const Product = sequelize.define(
             primaryKey: true,
             autoIncrement: true,
         },
+        category_id: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+        },
+        brand_id: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+        },
         product_name: {
             type: DataTypes.STRING,
             allowNull: false,
@@ -22,23 +30,39 @@ const Product = sequelize.define(
         desc: {
             type: DataTypes.TEXT,
         },
+        is_active: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: true,
+        },
     },
     {
         sequelize,
-        moduleName: "Product",
         tableName: "Products",
-        timestamps: false,
+        timestamps: true,
+        createdAt: "created_at",
+        updatedAt: "updated_at",
     },
 );
 
-// 1. Định nghĩa quan hệ
 Product.associate = (models) => {
-    Product.belongsTo(models.Brand, { foreignKey: "brand_id" });
-    Product.belongsTo(models.Category, { foreignKey: "category_id" });
+    Product.belongsTo(models.Brand, { foreignKey: "brand_id", as: "brand" });
+    Product.belongsTo(models.Category, {
+        foreignKey: "category_id",
+        as: "category",
+    });
     Product.hasMany(models.ProductVariant, {
         foreignKey: "product_id",
         as: "variants",
     });
+    if (models.Discount && models.ProductDiscount) {
+        Product.belongsToMany(models.Discount, {
+            through: models.ProductDiscount,
+            foreignKey: "product_id",
+            otherKey: "discount_id",
+            as: "discounts",
+        });
+    }
 };
 
 module.exports = {

@@ -16,12 +16,18 @@ const Brand = sequelize.define(
         desc: {
             type: DataTypes.TEXT,
         },
+        is_active: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: true,
+        },
     },
     {
         sequelize,
-        moduleName: "Brand",
         tableName: "Brands",
-        timestamps: false,
+        timestamps: true,
+        createdAt: "created_at",
+        updatedAt: "updated_at",
     },
 );
 

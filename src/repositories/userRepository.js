@@ -1,14 +1,9 @@
 const { User, normalizeEmail, USER_ROLES } = require("../models/userModel");
 
-const refreshTokenByUserId = new Map();
-const passwordResetOtpByUserId = new Map();
-
 const toDomainUser = (dbUser) => {
     if (!dbUser) {
         return null;
     }
-
-    const otpPayload = passwordResetOtpByUserId.get(dbUser.user_id);
 
     return {
         id: dbUser.user_id,
@@ -18,9 +13,9 @@ const toDomainUser = (dbUser) => {
         phone: dbUser.phone_number,
         role: dbUser.role,
         passwordHash: dbUser.password,
-        refreshToken: refreshTokenByUserId.get(dbUser.user_id) || null,
-        resetOtpHash: otpPayload ? otpPayload.otpHash : null,
-        resetOtpExpiresAt: otpPayload ? otpPayload.expiresAt : null,
+        resetOtpHash: dbUser.reset_otp_hash || null,
+        resetOtpExpiresAt: dbUser.reset_otp_expires_at || null,
+        isActive: dbUser.is_active,
     };
 };
 
@@ -77,56 +72,36 @@ const create = async ({
     return toDomainUser(dbUser);
 };
 
-const updateRefreshToken = async (userId, refreshToken) => {
-    const user = await findById(userId);
-    if (!user) {
-        return null;
-    }
-
-    if (refreshToken) {
-        refreshTokenByUserId.set(userId, refreshToken);
-    } else {
-        refreshTokenByUserId.delete(userId);
-    }
-
-    return {
-        ...user,
-        refreshToken: refreshToken || null,
-    };
-};
-
-const clearRefreshToken = async (userId) => {
-    return updateRefreshToken(userId, null);
-};
-
 const storePasswordResetOtp = async (userId, { otpHash, expiresAt }) => {
-    const user = await findById(userId);
-    if (!user) {
+    const [updatedCount] = await User.update(
+        {
+            reset_otp_hash: otpHash,
+            reset_otp_expires_at: expiresAt,
+        },
+        { where: { user_id: userId } },
+    );
+
+    if (!updatedCount) {
         return null;
     }
 
-    passwordResetOtpByUserId.set(userId, { otpHash, expiresAt });
-
-    return {
-        ...user,
-        resetOtpHash: otpHash,
-        resetOtpExpiresAt: expiresAt,
-    };
+    return findById(userId);
 };
 
 const clearPasswordResetOtp = async (userId) => {
-    const user = await findById(userId);
-    if (!user) {
+    const [updatedCount] = await User.update(
+        {
+            reset_otp_hash: null,
+            reset_otp_expires_at: null,
+        },
+        { where: { user_id: userId } },
+    );
+
+    if (!updatedCount) {
         return null;
     }
 
-    passwordResetOtpByUserId.delete(userId);
-
-    return {
-        ...user,
-        resetOtpHash: null,
-        resetOtpExpiresAt: null,
-    };
+    return findById(userId);
 };
 
 const updatePassword = async (userId, passwordHash) => {
@@ -146,8 +121,6 @@ module.exports = {
     findByEmail,
     findById,
     create,
-    updateRefreshToken,
-    clearRefreshToken,
     storePasswordResetOtp,
     clearPasswordResetOtp,
     updatePassword,
