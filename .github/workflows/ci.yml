@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    name: Lint & smoke test (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Syntax check all JS files
+        run: |
+          set -e
+          while IFS= read -r -d '' file; do
+            node --check "$file"
+          done < <(find server.js src -name "*.js" -print0)
+
+      - name: Load all Sequelize models
+        run: node -e "const db = require('./src/models'); const names = Object.keys(db).filter(k => k !== 'sequelize' && k !== 'Sequelize'); console.log('Loaded models:', names.join(', ')); if (names.length === 0) { process.exit(1); }"
+
+      - name: Smoke test server module
+        run: node -e "const app = require('./server.js'); if (typeof app !== 'function') { console.error('server.js did not export an Express app'); process.exit(1); } console.log('server.js loaded OK');"
