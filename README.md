@@ -57,7 +57,10 @@ API endpoints chinh:
 ```text
 Auth        : /auth/{register,login,logout,refresh-token,forgot-password,reset-password,change-password}
 Admin       : /admin/{login,logout,refresh-token,me}
-Products    : GET|POST|PUT|DELETE /products[/...]
+Products    : GET /products?q=&category_id=&brand_id=&material=&shape=&color=&min_price=&max_price=&in_stock=&sort=newest|oldest|price_asc|price_desc|name_asc|name_desc&page=&limit=
+              GET /products/:id  ; GET /products/:id/related?limit=
+              POST|PUT|DELETE /products[/:id]   (admin)
+              DELETE /products/:id/variants/:variantId  (admin)
 Categories  : GET|POST|PUT|DELETE /categories[/...]
 Brands      : GET|POST|PUT|DELETE /brands[/...]
 Cart        : GET|POST|PUT|DELETE /cart[/items/:variantId]
