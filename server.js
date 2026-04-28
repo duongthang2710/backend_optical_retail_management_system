@@ -8,6 +8,8 @@ const authRoute = require("./src/routes/authRoute");
 const adminRoute = require("./src/routes/adminRoute");
 const cartRoute = require("./src/routes/cartRoute");
 const productCategoriesRoute = require("./src/routes/productCategoriesRoute");
+const categoryRoute = require("./src/routes/categoryRoute");
+const brandRoute = require("./src/routes/brandRoute");
 const {
     errorHandlingMiddleware,
 } = require("./src/middlewares/errorHandlingMiddleware");
@@ -37,6 +39,8 @@ app.use("/auth", authRoute);
 app.use("/admin", adminRoute);
 app.use("/cart", cartRoute);
 app.use("/", productCategoriesRoute);
+app.use("/", categoryRoute);
+app.use("/", brandRoute);
 app.use((req, res) => {
     res.status(404).json({
         message: "Route not found",
