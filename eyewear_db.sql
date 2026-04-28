@@ -263,3 +263,6 @@ INSERT INTO Product_Order (variant_id, order_id, price_at_purchase, quantity, di
 INSERT INTO Comments (comment_id, variant_id, user_ID, order_id, rate, `desc`, is_active) VALUES
 (1, 3, 1, 1, 5, 'Gọng kính rất chắc chắn, đeo rất sang trọng.', TRUE),
 (2, 5, 1, 1, 5, 'Tròng kính trong suốt, chống chói rất tốt khi đi đêm.', TRUE);
+
+UPDATE Users SET password = '$2b$10$7IpzOgzUNlE2G1tQgzyZau7OGWmj8ptqYyG7EUkIF2mAf6ZKnULMS' WHERE role = 'customer';
+UPDATE Users SET password = '$2b$10$57YVC4zST4KNSZrmZPA64OSi7XDj.y1mS7T/lluMNpOjUPme5o3lG' WHERE role = 'admin';

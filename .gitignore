@@ -37,3 +37,6 @@ temp/
 Thumbs.db
 
 .prettierrc
+
+api_smoke.js
+SMOKE_TESTS.md
