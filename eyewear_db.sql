@@ -163,17 +163,21 @@ CREATE TABLE Comments (
 
 
 -- Dữ liệu Users
+-- Password (bcrypt-hashed, dùng để login):
+--   - Customer (user_id != 3) : User@123
+--   - Admin    (user_id  = 3) : Admin@123
+-- Login bằng email + password ở trên
 INSERT INTO Users (user_ID, user_name, password, full_name, email, phone_number, role, is_active) VALUES
-(1, 'nguyenvana', 'pass123', 'Nguyen Van A', 'a@mail.com', '0912345678', 'customer', TRUE),
-(2, 'tranvanb', 'pass123', 'Tran Van B', 'b@mail.com', '0912345679', 'customer', TRUE),
-(3, 'lethic', 'pass123', 'Le Thi C', 'c@mail.com', '0912345680', 'admin', TRUE),
-(4, 'phamvand', 'pass123', 'Pham Van D', 'd@mail.com', '0912345681', 'customer', TRUE),
-(5, 'hoangthie', 'pass123', 'Hoang Thi E', 'e@mail.com', '0912345682', 'customer', TRUE),
-(6, 'vuvana', 'pass123', 'Vu Van A', 'f@mail.com', '0912345683', 'customer', TRUE),
-(7, 'doanthib', 'pass123', 'Doan Thi B', 'g@mail.com', '0912345684', 'customer', TRUE),
-(8, 'buivanc', 'pass123', 'Bui Van C', 'h@mail.com', '0912345685', 'customer', TRUE),
-(9, 'dangthid', 'pass123', 'Dang Thi D', 'i@mail.com', '0912345686', 'customer', TRUE),
-(10, 'ngothie', 'pass123', 'Ngo Thi E', 'k@mail.com', '0912345687', 'customer', TRUE);
+(1, 'nguyenvana', '$2b$10$7IpzOgzUNlE2G1tQgzyZau7OGWmj8ptqYyG7EUkIF2mAf6ZKnULMS', 'Nguyen Van A', 'a@mail.com', '0912345678', 'customer', TRUE),
+(2, 'tranvanb',   '$2b$10$7IpzOgzUNlE2G1tQgzyZau7OGWmj8ptqYyG7EUkIF2mAf6ZKnULMS', 'Tran Van B',   'b@mail.com', '0912345679', 'customer', TRUE),
+(3, 'lethic',     '$2b$10$57YVC4zST4KNSZrmZPA64OSi7XDj.y1mS7T/lluMNpOjUPme5o3lG', 'Le Thi C',     'c@mail.com', '0912345680', 'admin',    TRUE),
+(4, 'phamvand',   '$2b$10$7IpzOgzUNlE2G1tQgzyZau7OGWmj8ptqYyG7EUkIF2mAf6ZKnULMS', 'Pham Van D',   'd@mail.com', '0912345681', 'customer', TRUE),
+(5, 'hoangthie',  '$2b$10$7IpzOgzUNlE2G1tQgzyZau7OGWmj8ptqYyG7EUkIF2mAf6ZKnULMS', 'Hoang Thi E',  'e@mail.com', '0912345682', 'customer', TRUE),
+(6, 'vuvana',     '$2b$10$7IpzOgzUNlE2G1tQgzyZau7OGWmj8ptqYyG7EUkIF2mAf6ZKnULMS', 'Vu Van A',     'f@mail.com', '0912345683', 'customer', TRUE),
+(7, 'doanthib',   '$2b$10$7IpzOgzUNlE2G1tQgzyZau7OGWmj8ptqYyG7EUkIF2mAf6ZKnULMS', 'Doan Thi B',   'g@mail.com', '0912345684', 'customer', TRUE),
+(8, 'buivanc',    '$2b$10$7IpzOgzUNlE2G1tQgzyZau7OGWmj8ptqYyG7EUkIF2mAf6ZKnULMS', 'Bui Van C',    'h@mail.com', '0912345685', 'customer', TRUE),
+(9, 'dangthid',   '$2b$10$7IpzOgzUNlE2G1tQgzyZau7OGWmj8ptqYyG7EUkIF2mAf6ZKnULMS', 'Dang Thi D',   'i@mail.com', '0912345686', 'customer', TRUE),
+(10, 'ngothie',   '$2b$10$7IpzOgzUNlE2G1tQgzyZau7OGWmj8ptqYyG7EUkIF2mAf6ZKnULMS', 'Ngo Thi E',    'k@mail.com', '0912345687', 'customer', TRUE);
 
 -- Dữ liệu Address
 INSERT INTO Address (address_id, city, street, specifiable_address, is_active) VALUES
