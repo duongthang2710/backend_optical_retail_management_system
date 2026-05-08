@@ -1,7 +1,7 @@
 const express = require("express");
 
 const orderController = require("../controllers/orderController");
-const { authMiddleware, isAdmin } = require("../middlewares/authMiddleware");
+const { authMiddleware, isStaffOrAdmin } = require("../middlewares/authMiddleware");
 const {
     validateOrderIdParam,
     validateCheckout,
@@ -33,20 +33,20 @@ router.post(
 router.get(
     "/admin/all",
     authMiddleware,
-    isAdmin,
+    isStaffOrAdmin,
     orderController.adminListAllOrders,
 );
 router.get(
     "/admin/:id",
     authMiddleware,
-    isAdmin,
+    isStaffOrAdmin,
     validateOrderIdParam,
     orderController.adminGetOrder,
 );
 router.patch(
     "/admin/:id/status",
     authMiddleware,
-    isAdmin,
+    isStaffOrAdmin,
     validateOrderIdParam,
     validateUpdateStatus,
     orderController.adminUpdateStatus,
@@ -54,7 +54,7 @@ router.patch(
 router.patch(
     "/admin/:id/mark-paid",
     authMiddleware,
-    isAdmin,
+    isStaffOrAdmin,
     validateOrderIdParam,
     orderController.adminMarkPaid,
 );

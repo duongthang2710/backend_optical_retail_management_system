@@ -44,30 +44,42 @@ Backend Node.js Express cho he thong quan ly cua hang kinh. Hien tai repo da tri
 Da trien khai:
 
 - Authentication API: Register, Login, Logout, Refresh token, Forgot/Reset/Change password
-- Admin auth (login/logout/refresh/profile)
-- Product/Category/Brand: CRUD (admin) + list/detail (public)
+- Admin auth (login/logout/refresh/profile) — chấp nhận cả role `admin` và `staff`
+- Product/Category/Brand: CRUD (staff/admin) + list/detail (public)
 - Cart: dung bang `Orders` voi `status='Cart'` (add/update/remove/clear)
 - Address: CRUD dia chi cua user
-- Discount: CRUD + gan/bo discount cho product
-- Order: checkout (cart -> order), list/detail/cancel cho user; admin list, update status, mark paid
-- Comment / rating: CRUD review san pham (chi user da mua)
+- Discount: CRUD (staff/admin) + gan/bo discount cho product
+- Order: checkout (cart -> order), list/detail/cancel cho user; staff/admin list, update status, mark paid
+- Comment / rating: CRUD review san pham (chi user da mua); staff/admin có thể xoá moderation
+- User management: list / cập nhật role / khoá–mở tài khoản (chỉ `admin`)
+
+### Roles
+
+| Role | Đăng nhập qua | Quyền chính |
+| --- | --- | --- |
+| `customer` | `POST /auth/login` | Mua hàng, đánh giá, quản lý profile/địa chỉ |
+| `staff` | `POST /admin/login` | Quản lý sản phẩm, danh mục, thương hiệu, mã giảm giá, đơn hàng, kiểm duyệt comment |
+| `admin` | `POST /admin/login` | Tất cả quyền của staff + quản lý người dùng (đổi role, khoá tài khoản) |
 
 API endpoints chinh:
 
 ```text
 Auth        : /auth/{register,login,logout,refresh-token,forgot-password,reset-password,change-password}
-Admin       : /admin/{login,logout,refresh-token,me}
+Admin       : /admin/{login,logout,refresh-token,me}                                       (staff & admin)
+Users (mgmt): GET /admin/users; GET /admin/users/:id; PATCH /admin/users/:id/role,
+              PATCH /admin/users/:id/active                                                (admin only)
 Products    : GET /products?q=&category_id=&brand_id=&material=&shape=&color=&min_price=&max_price=&in_stock=&sort=newest|oldest|price_asc|price_desc|name_asc|name_desc&page=&limit=
               GET /products/:id  ; GET /products/:id/related?limit=
-              POST|PUT|DELETE /products[/:id]   (admin)
-              DELETE /products/:id/variants/:variantId  (admin)
-Categories  : GET|POST|PUT|DELETE /categories[/...]
-Brands      : GET|POST|PUT|DELETE /brands[/...]
+              POST|PUT|DELETE /products[/:id]   (staff/admin)
+              DELETE /products/:id/variants/:variantId  (staff/admin)
+Categories  : GET|POST|PUT|DELETE /categories[/...]                                        (write: staff/admin)
+Brands      : GET|POST|PUT|DELETE /brands[/...]                                            (write: staff/admin)
 Cart        : GET|POST|PUT|DELETE /cart[/items/:variantId]
-Addresses   : GET|POST|PUT|DELETE /addresses[/:id]   (auth)
-Discounts   : GET|POST|PUT|DELETE /discounts[/:id]; POST|DELETE /discounts/:id/products/:productId
+Addresses   : GET|POST|PUT|DELETE /addresses[/:id]                                         (auth)
+Discounts   : GET|POST|PUT|DELETE /discounts[/:id]; POST|DELETE /discounts/:id/products/:productId  (write: staff/admin)
 Orders      : POST /orders/checkout; GET /orders, /orders/:id; POST /orders/:id/cancel
-              Admin: GET /orders/admin/all, /orders/admin/:id; PATCH /orders/admin/:id/status, /orders/admin/:id/mark-paid
+              Staff/Admin: GET /orders/admin/all, /orders/admin/:id;
+                           PATCH /orders/admin/:id/status, /orders/admin/:id/mark-paid
 Comments    : GET /variants/:variantId/comments, /comments/:id; POST|PUT|DELETE /comments[/:id] (auth)
 ```
 

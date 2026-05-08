@@ -1,7 +1,7 @@
 const express = require("express");
 
 const discountController = require("../controllers/discountController");
-const { authMiddleware, isAdmin } = require("../middlewares/authMiddleware");
+const { authMiddleware, isStaffOrAdmin } = require("../middlewares/authMiddleware");
 const {
     validateDiscountIdParam,
     validateProductIdParam,
@@ -21,7 +21,7 @@ router.get(
 router.post(
     "/",
     authMiddleware,
-    isAdmin,
+    isStaffOrAdmin,
     validateCreateDiscount,
     discountController.createDiscount,
 );
@@ -29,7 +29,7 @@ router.post(
 router.put(
     "/:id",
     authMiddleware,
-    isAdmin,
+    isStaffOrAdmin,
     validateDiscountIdParam,
     validateUpdateDiscount,
     discountController.updateDiscount,
@@ -38,7 +38,7 @@ router.put(
 router.delete(
     "/:id",
     authMiddleware,
-    isAdmin,
+    isStaffOrAdmin,
     validateDiscountIdParam,
     discountController.deleteDiscount,
 );
@@ -46,7 +46,7 @@ router.delete(
 router.post(
     "/:id/products/:productId",
     authMiddleware,
-    isAdmin,
+    isStaffOrAdmin,
     validateDiscountIdParam,
     validateProductIdParam,
     discountController.attachProduct,
@@ -55,7 +55,7 @@ router.post(
 router.delete(
     "/:id/products/:productId",
     authMiddleware,
-    isAdmin,
+    isStaffOrAdmin,
     validateDiscountIdParam,
     validateProductIdParam,
     discountController.detachProduct,
