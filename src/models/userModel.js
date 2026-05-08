@@ -3,8 +3,11 @@ const { DataTypes } = require("sequelize");
 
 const USER_ROLES = {
     CUSTOMER: "customer",
+    STAFF: "staff",
     ADMIN: "admin",
 };
+
+const STAFF_OR_ADMIN_ROLES = [USER_ROLES.STAFF, USER_ROLES.ADMIN];
 
 const normalizeEmail = (email) =>
     String(email || "")
@@ -93,5 +96,6 @@ User.associate = (models) => {
 module.exports = {
     User,
     USER_ROLES,
+    STAFF_OR_ADMIN_ROLES,
     normalizeEmail,
 };

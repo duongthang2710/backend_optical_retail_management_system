@@ -1,7 +1,7 @@
 const bcrypt = require("bcryptjs");
 
 const { getUserByEmail, getUserById } = require("./userService");
-const { USER_ROLES } = require("../models/userModel");
+const { USER_ROLES, STAFF_OR_ADMIN_ROLES } = require("../models/userModel");
 const { rotateTokens, verifyRefreshToken } = require("../utils/token");
 const createHttpError = require("../utils/httpError");
 
@@ -25,13 +25,22 @@ class AdminService {
         }
     }
 
+    ensureStaffOrAdmin(user) {
+        if (!user || !STAFF_OR_ADMIN_ROLES.includes(user.role)) {
+            throw createHttpError(403, "Forbidden: Staff or Admins only");
+        }
+        if (user.isActive === false) {
+            throw createHttpError(403, "Account is inactive");
+        }
+    }
+
     async loginAdmin({ email, password }) {
         const user = await getUserByEmail(email);
         if (!user) {
             throw createHttpError(404, "User not found");
         }
 
-        this.ensureAdmin(user);
+        this.ensureStaffOrAdmin(user);
 
         const isPasswordValid = await bcrypt.compare(
             password,
@@ -52,7 +61,7 @@ class AdminService {
 
     async logoutAdmin(userId) {
         const user = await getUserById(userId);
-        this.ensureAdmin(user);
+        this.ensureStaffOrAdmin(user);
 
         return {
             message: "Logged out",
@@ -72,7 +81,7 @@ class AdminService {
         }
 
         const user = await getUserById(payload.sub);
-        this.ensureAdmin(user);
+        this.ensureStaffOrAdmin(user);
 
         const tokens = rotateTokens(user);
 
@@ -84,7 +93,7 @@ class AdminService {
 
     async getAdminProfile(userId) {
         const user = await getUserById(userId);
-        this.ensureAdmin(user);
+        this.ensureStaffOrAdmin(user);
 
         return {
             user: this.toPublicAdmin(user),

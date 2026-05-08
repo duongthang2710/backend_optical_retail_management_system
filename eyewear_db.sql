@@ -266,3 +266,7 @@ INSERT INTO Comments (comment_id, variant_id, user_ID, order_id, rate, `desc`, i
 
 UPDATE Users SET password = '$2b$10$7IpzOgzUNlE2G1tQgzyZau7OGWmj8ptqYyG7EUkIF2mAf6ZKnULMS' WHERE role = 'customer';
 UPDATE Users SET password = '$2b$10$57YVC4zST4KNSZrmZPA64OSi7XDj.y1mS7T/lluMNpOjUPme5o3lG' WHERE role = 'admin';
+-- Tài khoản nhân viên (Staff) — đăng nhập qua POST /admin/login
+-- email: staff@mail.com  |  password: Staff@123
+INSERT INTO Users (user_ID, user_name, password, full_name, email, phone_number, role, is_active) VALUES
+(11, 'staffuser', '$2b$10$XcRbRQwR2.035qjYOtvIWOmkfAQUkxSMZhobiIoS5wSd2R3mgRmj2', 'Staff Default', 'staff@mail.com', '0912345699', 'staff', TRUE);

@@ -7,7 +7,7 @@ const {
     validateCreateBrand,
     validateUpdateBrand,
 } = require("../validators/brandValidator");
-const { authMiddleware, isAdmin } = require("../middlewares/authMiddleware");
+const { authMiddleware, isStaffOrAdmin } = require("../middlewares/authMiddleware");
 
 router.get("/brands", brandController.getAllBrands);
 router.get("/brands/:id", validateBrandIdParam, brandController.getBrandById);
@@ -15,7 +15,7 @@ router.get("/brands/:id", validateBrandIdParam, brandController.getBrandById);
 router.post(
     "/brands",
     authMiddleware,
-    isAdmin,
+    isStaffOrAdmin,
     validateCreateBrand,
     brandController.createBrand,
 );
@@ -23,7 +23,7 @@ router.post(
 router.put(
     "/brands/:id",
     authMiddleware,
-    isAdmin,
+    isStaffOrAdmin,
     validateBrandIdParam,
     validateUpdateBrand,
     brandController.updateBrand,
@@ -32,7 +32,7 @@ router.put(
 router.delete(
     "/brands/:id",
     authMiddleware,
-    isAdmin,
+    isStaffOrAdmin,
     validateBrandIdParam,
     brandController.deleteBrand,
 );

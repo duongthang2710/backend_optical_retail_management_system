@@ -57,11 +57,13 @@ class CommentController {
 
     async deleteComment(req, res, next) {
         try {
-            const isAdminUser = req.user && req.user.role === "admin";
+            const canModerate =
+                req.user &&
+                (req.user.role === "admin" || req.user.role === "staff");
             await commentService.remove(
                 req.user.id,
                 req.params.id,
-                isAdminUser,
+                canModerate,
             );
             return sendResponse(res, 200, "Comment deleted successfully");
         } catch (error) {

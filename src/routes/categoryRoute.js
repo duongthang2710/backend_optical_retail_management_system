@@ -7,7 +7,7 @@ const {
     validateCreateCategory,
     validateUpdateCategory,
 } = require("../validators/categoryValidator");
-const { authMiddleware, isAdmin } = require("../middlewares/authMiddleware");
+const { authMiddleware, isStaffOrAdmin } = require("../middlewares/authMiddleware");
 
 router.get("/categories", categoryController.getAllCategories);
 router.get(
@@ -19,7 +19,7 @@ router.get(
 router.post(
     "/categories",
     authMiddleware,
-    isAdmin,
+    isStaffOrAdmin,
     validateCreateCategory,
     categoryController.createCategory,
 );
@@ -27,7 +27,7 @@ router.post(
 router.put(
     "/categories/:id",
     authMiddleware,
-    isAdmin,
+    isStaffOrAdmin,
     validateCategoryIdParam,
     validateUpdateCategory,
     categoryController.updateCategory,
@@ -36,7 +36,7 @@ router.put(
 router.delete(
     "/categories/:id",
     authMiddleware,
-    isAdmin,
+    isStaffOrAdmin,
     validateCategoryIdParam,
     categoryController.deleteCategory,
 );

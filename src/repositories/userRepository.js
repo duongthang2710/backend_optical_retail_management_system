@@ -1,3 +1,4 @@
+const { Op } = require("sequelize");
 const { User, normalizeEmail, USER_ROLES } = require("../models/userModel");
 
 const toDomainUser = (dbUser) => {
@@ -117,6 +118,58 @@ const updatePassword = async (userId, passwordHash) => {
     return findById(userId);
 };
 
+const listUsers = async ({
+    role,
+    isActive,
+    q,
+    page = 1,
+    limit = 20,
+} = {}) => {
+    const where = {};
+    if (role) where.role = role;
+    if (typeof isActive === "boolean") where.is_active = isActive;
+    if (q) {
+        where[Op.or] = [
+            { full_name: { [Op.like]: `%${q}%` } },
+            { email: { [Op.like]: `%${q}%` } },
+            { user_name: { [Op.like]: `%${q}%` } },
+            { phone_number: { [Op.like]: `%${q}%` } },
+        ];
+    }
+
+    const { count, rows } = await User.findAndCountAll({
+        where,
+        order: [["user_id", "DESC"]],
+        limit: Number(limit) > 0 ? Number(limit) : 20,
+        offset: (Number(page) > 0 ? Number(page) - 1 : 0) * Number(limit || 20),
+    });
+
+    return {
+        totalItems: count,
+        totalPages: Math.ceil(count / Number(limit || 20)) || 0,
+        currentPage: Number(page),
+        users: rows.map(toDomainUser),
+    };
+};
+
+const updateRole = async (userId, role) => {
+    const [updatedCount] = await User.update(
+        { role },
+        { where: { user_id: userId } },
+    );
+    if (!updatedCount) return null;
+    return findById(userId);
+};
+
+const updateActiveStatus = async (userId, isActive) => {
+    const [updatedCount] = await User.update(
+        { is_active: isActive },
+        { where: { user_id: userId } },
+    );
+    if (!updatedCount) return null;
+    return findById(userId);
+};
+
 module.exports = {
     findByEmail,
     findById,
@@ -124,4 +177,7 @@ module.exports = {
     storePasswordResetOtp,
     clearPasswordResetOtp,
     updatePassword,
+    listUsers,
+    updateRole,
+    updateActiveStatus,
 };
