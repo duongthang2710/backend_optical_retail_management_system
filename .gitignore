@@ -32,7 +32,9 @@ build/
 
 # Cache and temp
 .cache/
+.tmp/
 tmp/
+tmp-command-test/
 temp/
 
 # Generated RAG index
