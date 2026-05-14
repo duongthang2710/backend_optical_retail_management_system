@@ -367,8 +367,87 @@ Status codes chinh:
 7. `POST /auth/reset-password`
 8. `POST /auth/change-password`
 
+## RAG Chatbot
+
+Chatbot tu van ban kinh da duoc tich hop vao backend theo MVC:
+
+- Route: `POST /api/chatbot/chat`
+- Controller: `src/controllers/chatbotController.js`
+- Services: `src/services/chatbotService.js`, `retrievalService.js`, `embeddingService.js`, `rerankService.js`
+- AI service Python: `ai-service/`
+- Du lieu RAG: `data/rag/rag_chunks.jsonl`
+
+### Setup lan dau sau khi clone
+
+1. Cai Node packages:
+
+```bash
+npm install
+```
+
+2. Tao file `.env` tu `.env.example`, sau do dien `DEEPSEEK_API_KEY`.
+
+3. Cai Python AI service dependencies:
+
+```bash
+npm run chatbot:setup-ai
+```
+
+Lenh nay se tao `ai-service/.venv` va cai cac package trong `ai-service/requirements.txt`.
+
+### Chay chatbot local
+
+Mo terminal 1:
+
+```bash
+npm run chatbot:ai
+```
+
+Mo terminal 2 de build vector index:
+
+```bash
+npm run chatbot:index
+```
+
+Lenh nay doc `data/rag/rag_chunks.jsonl` va tao `data/rag/vector_index.json`.
+Khong commit file index nay vi co the build lai tu JSONL.
+
+Mo terminal 3 de chay backend:
+
+```bash
+npm run dev
+```
+
+Test API:
+
+```text
+POST http://localhost:3000/api/chatbot/chat
+Content-Type: application/json
+```
+
+```json
+{
+    "message": "Gong kinh duoc bao hanh bao lau?"
+}
+```
+
+Test bang script:
+
+```bash
+npm run chatbot:test
+```
+
+### Ghi chu chatbot
+
+- Khong can Docker/Qdrant cho ban tich hop backend hien tai.
+- `USE_RERANK=false` thi backend chi dung vector search local.
+- Neu bat `USE_RERANK=true`, AI service trong `ai-service/` da co san endpoint `/rerank`.
+- Lan dau chay AI service co the mat thoi gian vi model `BAAI/bge-m3` va `BAAI/bge-reranker-v2-m3` duoc tai ve.
+
 ## Git Notes
 
 - Khong commit `.env`
 - Khong commit `node_modules`
+- Khong commit `ai-service/.venv`
+- Khong commit `data/rag/vector_index.json`
 - Repo da co `.gitignore` va `.gitattributes` de giu working tree sach va line endings on dinh

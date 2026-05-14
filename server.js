@@ -16,6 +16,7 @@ const addressRoute = require("./src/routes/addressRoute");
 const discountRoute = require("./src/routes/discountRoute");
 const orderRoute = require("./src/routes/orderRoute");
 const commentRoute = require("./src/routes/commentRoute");
+const chatbotRoute = require("./src/routes/chatbotRoutes");
 const {
     errorHandlingMiddleware,
 } = require("./src/middlewares/errorHandlingMiddleware");
@@ -41,6 +42,7 @@ app.get("/", (req, res) => {
     });
 });
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/api/chatbot", chatbotRoute);
 app.use("/auth", authRoute);
 app.use("/admin", adminRoute);
 app.use("/cart", cartRoute);

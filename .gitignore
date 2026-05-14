@@ -1,5 +1,10 @@
 node_modules/
 
+# Python AI service runtime
+ai-service/.venv/
+ai-service/__pycache__/
+*.pyc
+
 # Environment files
 .env
 .env.*
@@ -27,8 +32,13 @@ build/
 
 # Cache and temp
 .cache/
+.tmp/
 tmp/
+tmp-command-test/
 temp/
+
+# Generated RAG index
+data/rag/vector_index.json
 
 # IDE and OS files
 .vscode/

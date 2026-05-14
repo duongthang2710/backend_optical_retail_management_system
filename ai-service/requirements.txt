@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+FlagEmbedding
+torch
+numpy
+pydantic
+transformers<5
