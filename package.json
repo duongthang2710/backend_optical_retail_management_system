@@ -22,6 +22,10 @@
   "scripts": {
     "dev": "nodemon server.js",
     "start": "node server.js",
+    "chatbot:setup-ai": "node scripts/setupAiService.js",
+    "chatbot:ai": "node scripts/startAiService.js",
+    "chatbot:index": "node scripts/buildVectorIndex.js",
+    "chatbot:test": "node scripts/testChatbot.js",
     "test": "node -e \"console.error('No tests configured'); process.exit(1)\""
   },
   "dependencies": {
