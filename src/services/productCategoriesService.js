@@ -38,6 +38,15 @@ const toNumberOrNull = (value) => {
     return Number.isNaN(n) ? NaN : n;
 };
 
+const parseActive01 = (value) => {
+    if (value === undefined) return undefined;
+    if (value === 1 || value === 0) return Boolean(value);
+    const normalized = String(value).trim();
+    if (normalized === "1") return true;
+    if (normalized === "0") return false;
+    return undefined;
+};
+
 const computeAggregates = (product, ratingMap) => {
     const variants = (product.variants || []).filter(
         (v) => v.is_active !== false,
@@ -49,8 +58,7 @@ const computeAggregates = (product, ratingMap) => {
         (sum, v) => sum + Number(v.stock_quantity || 0),
         0,
     );
-    const primaryImage =
-        variants.find((v) => v.image)?.image || null;
+    const primaryImage = variants.find((v) => v.image)?.image || null;
 
     let totalRating = 0;
     let totalReviews = 0;
@@ -62,9 +70,7 @@ const computeAggregates = (product, ratingMap) => {
         }
     }
     const avgRating =
-        totalReviews > 0
-            ? Number((totalRating / totalReviews).toFixed(2))
-            : 0;
+        totalReviews > 0 ? Number((totalRating / totalReviews).toFixed(2)) : 0;
 
     return {
         min_price: prices.length ? Math.min(...prices) : null,
@@ -80,10 +86,10 @@ const computeAggregates = (product, ratingMap) => {
 const withTryOnImageUrl = (product) => {
     const variants = Array.isArray(product.variants)
         ? product.variants.map((variant) => ({
-            ...variant,
-            tryOnImageUrl: variant.tryOnImageUrl || variant.image || null,
-            tryOnModelUrl: variant.tryOnModelUrl || variant.image3d || null,
-        }))
+              ...variant,
+              tryOnImageUrl: variant.tryOnImageUrl || variant.image || null,
+              tryOnModelUrl: variant.tryOnModelUrl || variant.image3d || null,
+          }))
         : [];
     const tryOnImageUrl =
         variants.find((variant) => variant.tryOnImageUrl)?.tryOnImageUrl ||
@@ -111,7 +117,10 @@ const loadRatingMap = async (variantIds) => {
         attributes: [
             "variant_id",
             [db.sequelize.fn("SUM", db.sequelize.col("rate")), "sum_rating"],
-            [db.sequelize.fn("COUNT", db.sequelize.col("comment_id")), "total_reviews"],
+            [
+                db.sequelize.fn("COUNT", db.sequelize.col("comment_id")),
+                "total_reviews",
+            ],
         ],
         where: {
             variant_id: { [Op.in]: variantIds },
@@ -145,7 +154,7 @@ class ProductService {
         const page =
             Number(queryFilters.page) > 0 ? Number(queryFilters.page) : 1;
         const limit =
-            Number(queryFilters.limit) > 0 ? Number(queryFilters.limit) : 10;
+            Number(queryFilters.limit) > 0 ? Number(queryFilters.limit) : 20;
 
         const minPrice = toNumberOrNull(queryFilters.min_price);
         let maxPrice = toNumberOrNull(queryFilters.max_price);
@@ -154,19 +163,15 @@ class ProductService {
         }
 
         if (
-            minPrice !== null && Number.isNaN(minPrice)
-            || maxPrice !== null && Number.isNaN(maxPrice)
+            (minPrice !== null && Number.isNaN(minPrice)) ||
+            (maxPrice !== null && Number.isNaN(maxPrice))
         ) {
             throw new ApiError(
                 statusCodes.BAD_REQUEST,
                 "Price must be a valid number",
             );
         }
-        if (
-            minPrice !== null &&
-            maxPrice !== null &&
-            minPrice > maxPrice
-        ) {
+        if (minPrice !== null && maxPrice !== null && minPrice > maxPrice) {
             throw new ApiError(
                 statusCodes.BAD_REQUEST,
                 "min_price must be <= max_price",
@@ -214,10 +219,7 @@ class ProductService {
         if (inStock) variantWhere.stock_quantity = { [Op.gt]: 0 };
 
         const hasVariantFilter =
-            Boolean(color) ||
-            minPrice !== null ||
-            maxPrice !== null ||
-            inStock;
+            Boolean(color) || minPrice !== null || maxPrice !== null || inStock;
 
         // Step 1: find matching product IDs (with pagination + filters + sort)
         const idQuery = await Product.findAndCountAll({
@@ -307,7 +309,10 @@ class ProductService {
 
         const enriched = orderedProducts.map((p) => {
             const plain = p.toJSON ? p.toJSON() : p;
-            const aggregated = { ...plain, ...computeAggregates(plain, ratingMap) };
+            const aggregated = {
+                ...plain,
+                ...computeAggregates(plain, ratingMap),
+            };
             return withTryOnImageUrl(aggregated);
         });
 
@@ -357,10 +362,16 @@ class ProductService {
 
             //thêm variant
             if (variants && variants.length > 0) {
-                const variantWithId = variants.map((v) => ({
-                    ...v,
-                    product_id: newProduct.product_id,
-                }));
+                const variantWithId = variants.map((v) => {
+                    const parsedActive = parseActive01(v.is_active);
+                    return {
+                        ...v,
+                        product_id: newProduct.product_id,
+                        ...(parsedActive !== undefined
+                            ? { is_active: parsedActive }
+                            : {}),
+                    };
+                });
                 await ProductVariant.bulkCreate(variantWithId, {
                     transaction: trans,
                 });
@@ -405,7 +416,10 @@ class ProductService {
         );
         const ratingMap = await loadRatingMap(variantIds);
         const plain = product.toJSON();
-        return withTryOnImageUrl({ ...plain, ...computeAggregates(plain, ratingMap) });
+        return withTryOnImageUrl({
+            ...plain,
+            ...computeAggregates(plain, ratingMap),
+        });
     }
 
     async getRelatedProducts(productId, limit = 8) {
@@ -464,7 +478,10 @@ class ProductService {
 
         return candidates.map((p) => {
             const plain = p.toJSON();
-            return withTryOnImageUrl({ ...plain, ...computeAggregates(plain, ratingMap) });
+            return withTryOnImageUrl({
+                ...plain,
+                ...computeAggregates(plain, ratingMap),
+            });
         });
     }
 
@@ -508,6 +525,7 @@ class ProductService {
             if (variants && Array.isArray(variants)) {
                 for (const item of variants) {
                     if (item.variant_id) {
+                        const parsedActive = parseActive01(item.is_active);
                         const [affectedRows] = await ProductVariant.update(
                             {
                                 color: item.color,
@@ -515,6 +533,9 @@ class ProductService {
                                 stock_quantity: item.stock_quantity,
                                 image: item.image,
                                 image3d: item.image3d,
+                                ...(parsedActive !== undefined
+                                    ? { is_active: parsedActive }
+                                    : {}),
                             },
                             {
                                 where: {
@@ -544,10 +565,14 @@ class ProductService {
                             );
                             throw error;
                         }
+                        const parsedActive = parseActive01(item.is_active);
                         await ProductVariant.create(
                             {
                                 ...item,
                                 product_id: productId,
+                                ...(parsedActive !== undefined
+                                    ? { is_active: parsedActive }
+                                    : {}),
                             },
                             { transaction: trans },
                         );
@@ -583,17 +608,20 @@ class ProductService {
             );
             throw error;
         }
-        const variantCount = await ProductVariant.count({
-            where: { product_id: variant.product_id },
+        if (!variant.is_active) {
+            return true;
+        }
+        const activeCount = await ProductVariant.count({
+            where: { product_id: variant.product_id, is_active: true },
         });
-        if (variantCount <= 1) {
+        if (activeCount <= 1) {
             const error = new ApiError(
                 statusCodes.BAD_REQUEST,
                 "At least one variant is required for a product",
             );
             throw error;
         }
-        await variant.destroy();
+        await variant.update({ is_active: false });
         return true;
     }
 }

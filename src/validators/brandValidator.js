@@ -14,19 +14,43 @@ const validateBrandIdParam = (req, res, next) => {
 };
 
 const validateCreateBrand = (req, res, next) => {
-    const { brand_name } = req.body;
+    const { brand_name, is_active } = req.body;
     if (!brand_name || String(brand_name).trim() === "") {
         return sendResponse(res, 400, "brand_name is required");
+    }
+    if (is_active !== undefined) {
+        const normalized = String(is_active).trim();
+        const valid =
+            is_active === 0 ||
+            is_active === 1 ||
+            ["0", "1"].includes(normalized);
+        if (!valid) {
+            return sendResponse(res, 400, "is_active must be 0 or 1");
+        }
     }
     return next();
 };
 
 const validateUpdateBrand = (req, res, next) => {
-    const { brand_name, desc } = req.body;
+    const { brand_name, desc, is_active } = req.body;
     if (brand_name !== undefined && String(brand_name).trim() === "") {
         return sendResponse(res, 400, "brand_name cannot be empty");
     }
-    if (brand_name === undefined && desc === undefined) {
+    if (is_active !== undefined) {
+        const normalized = String(is_active).trim();
+        const valid =
+            is_active === 0 ||
+            is_active === 1 ||
+            ["0", "1"].includes(normalized);
+        if (!valid) {
+            return sendResponse(res, 400, "is_active must be 0 or 1");
+        }
+    }
+    if (
+        brand_name === undefined &&
+        desc === undefined &&
+        is_active === undefined
+    ) {
         return sendResponse(res, 400, "Nothing to update");
     }
     return next();
