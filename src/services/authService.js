@@ -7,6 +7,7 @@ const {
     clearPasswordResetOtp,
     storePasswordResetOtp,
     updateUserPassword,
+    updateUserProfile,
 } = require("./userService");
 const { USER_ROLES } = require("../models/userModel");
 const { sendPasswordResetOtp } = require("../utils/mailer");
@@ -188,6 +189,31 @@ const changePassword = async ({ userId, currentPassword, newPassword }) => {
     };
 };
 
+const updateProfile = async ({ userId, fullName, phone }) => {
+    const user = await getUserById(userId);
+    if (!user) {
+        throw createHttpError(401, "Invalid or expired token");
+    }
+
+    ensureActiveUser(user);
+
+    const updatedUser = await updateUserProfile(userId, {
+        fullName,
+        phone,
+    });
+    if (!updatedUser) {
+        throw createHttpError(404, "User not found");
+    }
+
+    return {
+        message: "Profile updated",
+        user: toPublicUser(updatedUser),
+        data: {
+            user: toPublicUser(updatedUser),
+        },
+    };
+};
+
 module.exports = {
     registerUser,
     loginUser,
@@ -196,4 +222,5 @@ module.exports = {
     forgotPassword,
     resetPassword,
     changePassword,
+    updateProfile,
 };

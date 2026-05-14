@@ -118,6 +118,27 @@ const updatePassword = async (userId, passwordHash) => {
     return findById(userId);
 };
 
+const updateProfile = async (userId, { fullName, phone }) => {
+    const payload = {};
+    if (fullName !== undefined) payload.full_name = fullName;
+    if (phone !== undefined) payload.phone_number = phone;
+
+    if (Object.keys(payload).length === 0) {
+        return findById(userId);
+    }
+
+    const [updatedCount] = await User.update(
+        payload,
+        { where: { user_id: userId } },
+    );
+
+    if (!updatedCount) {
+        return null;
+    }
+
+    return findById(userId);
+};
+
 const listUsers = async ({
     role,
     isActive,
@@ -177,6 +198,7 @@ module.exports = {
     storePasswordResetOtp,
     clearPasswordResetOtp,
     updatePassword,
+    updateProfile,
     listUsers,
     updateRole,
     updateActiveStatus,

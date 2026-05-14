@@ -161,6 +161,16 @@ const changePassword = asyncHandler(async (req, res) => {
     return res.status(200).json(payload);
 });
 
+const updateProfile = asyncHandler(async (req, res) => {
+    const payload = await authService.updateProfile({
+        userId: req.user.id,
+        fullName: req.body.fullName,
+        phone: req.body.phone,
+    });
+
+    return res.status(200).json(payload);
+});
+
 module.exports = {
     register,
     login,
@@ -169,4 +179,5 @@ module.exports = {
     forgotPassword,
     resetPassword,
     changePassword,
+    updateProfile,
 };

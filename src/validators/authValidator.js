@@ -128,6 +128,38 @@ const changePasswordValidator = [
         .withMessage("New password must be at least 8 characters"),
 ];
 
+const updateProfileValidator = [
+    body("fullName")
+        .optional({ values: "undefined" })
+        .trim()
+        .notEmpty()
+        .withMessage("Full name cannot be empty"),
+    body("phone")
+        .optional({ values: "undefined" })
+        .customSanitizer(normalizeVietnamPhone)
+        .custom((value) => {
+            if (!value) return true;
+            if (!isVietnamMobilePhone(value)) {
+                throw new Error(
+                    "Phone must be a valid Vietnamese mobile number",
+                );
+            }
+
+            return true;
+        }),
+    body()
+        .custom((value) => {
+            if (
+                value.fullName === undefined &&
+                value.phone === undefined
+            ) {
+                throw new Error("At least one profile field is required");
+            }
+
+            return true;
+        }),
+];
+
 module.exports = {
     registerValidator,
     loginValidator,
@@ -135,4 +167,5 @@ module.exports = {
     forgotPasswordValidator,
     resetPasswordValidator,
     changePasswordValidator,
+    updateProfileValidator,
 };

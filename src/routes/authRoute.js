@@ -10,6 +10,7 @@ const {
     refreshTokenValidator,
     registerValidator,
     resetPasswordValidator,
+    updateProfileValidator,
 } = require("../validators/authValidator");
 
 const router = express.Router();
@@ -46,6 +47,20 @@ router.post(
     changePasswordValidator,
     validateRequest,
     authController.changePassword,
+);
+router.put(
+    "/profile",
+    authMiddleware,
+    updateProfileValidator,
+    validateRequest,
+    authController.updateProfile,
+);
+router.put(
+    "/me",
+    authMiddleware,
+    updateProfileValidator,
+    validateRequest,
+    authController.updateProfile,
 );
 
 module.exports = router;

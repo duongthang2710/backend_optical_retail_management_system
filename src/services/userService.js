@@ -30,6 +30,10 @@ const updateUserPassword = async (userId, passwordHash) => {
     return userRepository.updatePassword(userId, passwordHash);
 };
 
+const updateUserProfile = async (userId, profileData) => {
+    return userRepository.updateProfile(userId, profileData);
+};
+
 module.exports = {
     getUserByEmail,
     getUserById,
@@ -37,4 +41,5 @@ module.exports = {
     storePasswordResetOtp,
     clearPasswordResetOtp,
     updateUserPassword,
+    updateUserProfile,
 };
