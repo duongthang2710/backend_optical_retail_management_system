@@ -1,4 +1,5 @@
 const { StatusCodes } = require("http-status-codes");
+const { Op } = require("sequelize");
 const db = require("../models");
 const ApiError = require("../utils/ApiError");
 const {
@@ -14,8 +15,81 @@ const Product = db.Product;
 const Address = db.Address;
 const User = db.User;
 const UserAddress = db.UserAddress;
+const Discount = db.Discount;
+const ProductDiscount = db.ProductDiscount;
 
 const VALID_PAYMENT_METHODS = new Set(Object.values(PAYMENT_METHODS));
+
+const getTodayDate = () => new Date().toISOString().slice(0, 10);
+
+const buildActiveDiscountWhere = () => {
+    const today = getTodayDate();
+    return {
+        is_active: true,
+        start_date: { [Op.lte]: today },
+        end_date: { [Op.gte]: today },
+    };
+};
+
+const normalizeDiscount = (discount) => {
+    if (!discount) return null;
+    return {
+        discount_id: discount.discount_id,
+        type_discount: discount.type_discount,
+        discount_value: Number(discount.discount_value || 0),
+        start_date: discount.start_date,
+        end_date: discount.end_date,
+        discount_number: discount.discount_number ?? null,
+        desc: discount.desc ?? null,
+    };
+};
+
+const computeDiscountAmount = (unitPrice, quantity, discount) => {
+    if (!discount) return 0;
+    let perUnitDiscount = 0;
+    if (discount.type_discount === "Percent") {
+        perUnitDiscount = unitPrice * (discount.discount_value / 100);
+    } else {
+        perUnitDiscount = discount.discount_value;
+    }
+    perUnitDiscount = Math.max(0, Math.min(unitPrice, perUnitDiscount));
+    return perUnitDiscount * quantity;
+};
+
+const loadActiveDiscountMap = async (productIds, transaction) => {
+    const map = new Map();
+    if (!productIds.length) return map;
+
+    const links = await ProductDiscount.findAll({
+        where: { product_id: { [Op.in]: productIds } },
+        include: [
+            {
+                model: Discount,
+                as: "discount",
+                required: true,
+                where: buildActiveDiscountWhere(),
+                attributes: [
+                    "discount_id",
+                    "type_discount",
+                    "discount_value",
+                    "start_date",
+                    "end_date",
+                    "discount_number",
+                    "desc",
+                ],
+            },
+        ],
+        transaction,
+    });
+
+    for (const link of links) {
+        if (!map.has(link.product_id)) {
+            map.set(link.product_id, normalizeDiscount(link.discount));
+        }
+    }
+
+    return map;
+};
 
 const NEXT_STATUS_BY_CURRENT = {
     [ORDER_STATUS.PENDING]: [ORDER_STATUS.CONFIRMED, ORDER_STATUS.CANCELLED],
@@ -101,11 +175,13 @@ class OrderService {
             });
 
             if (!cartOrder || (cartOrder.items || []).length === 0) {
-                throw new ApiError(
-                    StatusCodes.BAD_REQUEST,
-                    "Cart is empty",
-                );
+                throw new ApiError(StatusCodes.BAD_REQUEST, "Cart is empty");
             }
+
+            const productIds = (cartOrder.items || [])
+                .map((item) => item.variant?.product_id)
+                .filter(Boolean);
+            const discountMap = await loadActiveDiscountMap(productIds, trans);
 
             const addressId = Number(payload.address_id);
             if (!Number.isInteger(addressId) || addressId <= 0) {
@@ -162,8 +238,14 @@ class OrderService {
                 const unitPrice = Number(
                     item.price_at_purchase || variant.price || 0,
                 );
+                const discount = discountMap.get(variant.product_id) || null;
+                const discountAmount = computeDiscountAmount(
+                    unitPrice,
+                    requestedQty,
+                    discount,
+                );
                 subtotal += unitPrice * requestedQty;
-                discountTotal += Number(item.discount_amount || 0);
+                discountTotal += discountAmount;
 
                 await variant.update(
                     {
@@ -176,6 +258,18 @@ class OrderService {
                 if (item.price_at_purchase !== unitPrice) {
                     await ProductOrder.update(
                         { price_at_purchase: unitPrice },
+                        {
+                            where: {
+                                order_id: cartOrder.order_id,
+                                variant_id: variant.variant_id,
+                            },
+                            transaction: trans,
+                        },
+                    );
+                }
+                if (Number(item.discount_amount || 0) !== discountAmount) {
+                    await ProductOrder.update(
+                        { discount_amount: discountAmount },
                         {
                             where: {
                                 order_id: cartOrder.order_id,

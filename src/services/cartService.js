@@ -1,4 +1,5 @@
 const { StatusCodes } = require("http-status-codes");
+const { Op } = require("sequelize");
 const db = require("../models");
 const ApiError = require("../utils/ApiError");
 
@@ -8,6 +9,87 @@ const Order = db.Order;
 const ProductOrder = db.ProductOrder;
 const ProductVariant = db.ProductVariant;
 const Product = db.Product;
+const Discount = db.Discount;
+const ProductDiscount = db.ProductDiscount;
+
+const getTodayDate = () => new Date().toISOString().slice(0, 10);
+
+const buildActiveDiscountWhere = () => {
+    const today = getTodayDate();
+    return {
+        is_active: true,
+        start_date: { [Op.lte]: today },
+        end_date: { [Op.gte]: today },
+    };
+};
+
+const normalizeDiscount = (discount) => {
+    if (!discount) return null;
+    return {
+        discount_id: discount.discount_id,
+        type_discount: discount.type_discount,
+        discount_value: Number(discount.discount_value || 0),
+        start_date: discount.start_date,
+        end_date: discount.end_date,
+        discount_number: discount.discount_number ?? null,
+        desc: discount.desc ?? null,
+    };
+};
+
+const computeDiscount = (unitPrice, quantity, discount) => {
+    if (!discount) {
+        return { discountedUnitPrice: unitPrice, discountAmount: 0 };
+    }
+
+    let perUnitDiscount = 0;
+    if (discount.type_discount === "Percent") {
+        perUnitDiscount = unitPrice * (discount.discount_value / 100);
+    } else {
+        perUnitDiscount = discount.discount_value;
+    }
+
+    perUnitDiscount = Math.max(0, Math.min(unitPrice, perUnitDiscount));
+    const discountAmount = perUnitDiscount * quantity;
+    return {
+        discountedUnitPrice: Math.max(0, unitPrice - perUnitDiscount),
+        discountAmount,
+    };
+};
+
+const loadActiveDiscountMap = async (productIds, transaction) => {
+    const map = new Map();
+    if (!productIds.length) return map;
+
+    const links = await ProductDiscount.findAll({
+        where: { product_id: { [Op.in]: productIds } },
+        include: [
+            {
+                model: Discount,
+                as: "discount",
+                required: true,
+                where: buildActiveDiscountWhere(),
+                attributes: [
+                    "discount_id",
+                    "type_discount",
+                    "discount_value",
+                    "start_date",
+                    "end_date",
+                    "discount_number",
+                    "desc",
+                ],
+            },
+        ],
+        transaction,
+    });
+
+    for (const link of links) {
+        if (!map.has(link.product_id)) {
+            map.set(link.product_id, normalizeDiscount(link.discount));
+        }
+    }
+
+    return map;
+};
 
 class CartService {
     buildEmptyCart() {
@@ -21,7 +103,7 @@ class CartService {
         };
     }
 
-    formatCart(cartOrder) {
+    formatCart(cartOrder, discountMap = new Map()) {
         if (!cartOrder) {
             return this.buildEmptyCart();
         }
@@ -29,27 +111,32 @@ class CartService {
         const items = (cartOrder.items || []).map((item) => {
             const variant = item.variant;
             const product = variant?.product;
+            const productId = variant?.product_id || null;
+            const discount = productId ? discountMap.get(productId) : null;
 
             const quantity = Number(item.quantity || 0);
-            const unitPrice = Number(
+            const basePrice = Number(
                 item.price_at_purchase ?? variant?.price ?? 0,
             );
-            const discountAmount = Number(item.discount_amount || 0);
-            const lineTotal = Math.max(
-                0,
-                unitPrice * quantity - discountAmount,
+            const { discountedUnitPrice, discountAmount } = computeDiscount(
+                basePrice,
+                quantity,
+                discount,
             );
+            const lineTotal = Math.max(0, discountedUnitPrice * quantity);
 
             return {
                 variant_id: item.variant_id,
-                product_id: variant?.product_id || null,
+                product_id: productId,
                 product_name: product?.product_name || null,
                 color: variant?.color || null,
                 image: variant?.image || null,
                 image3d: variant?.image3d || null,
                 stock_quantity: Number(variant?.stock_quantity || 0),
                 quantity,
-                unit_price: unitPrice,
+                unit_price: discountedUnitPrice,
+                original_price: basePrice,
+                discount,
                 discount_amount: discountAmount,
                 line_total: lineTotal,
             };
@@ -147,8 +234,12 @@ class CartService {
                 [{ model: ProductOrder, as: "items" }, "variant_id", "ASC"],
             ],
         });
+        const productIds = (cartOrder?.items || [])
+            .map((item) => item.variant?.product_id)
+            .filter(Boolean);
+        const discountMap = await loadActiveDiscountMap(productIds);
 
-        return this.formatCart(cartOrder);
+        return this.formatCart(cartOrder, discountMap);
     }
 
     async ensureStock(variant, quantity) {

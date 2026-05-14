@@ -7,6 +7,7 @@ const Product = db.Product;
 const ProductVariant = db.ProductVariant;
 const Brand = db.Brand;
 const Category = db.Category;
+const Discount = db.Discount;
 const Comment = db.Comment;
 
 const SORT_OPTIONS = {
@@ -46,6 +47,37 @@ const parseActive01 = (value) => {
     if (normalized === "0") return false;
     return undefined;
 };
+
+const getTodayDate = () => new Date().toISOString().slice(0, 10);
+
+const buildActiveDiscountWhere = () => {
+    const today = getTodayDate();
+    return {
+        is_active: true,
+        start_date: { [Op.lte]: today },
+        end_date: { [Op.gte]: today },
+    };
+};
+
+const pickActiveDiscount = (discounts) => {
+    if (!Array.isArray(discounts) || discounts.length === 0) return null;
+    const d = discounts[0];
+    if (!d) return null;
+    return {
+        discount_id: d.discount_id,
+        type_discount: d.type_discount,
+        discount_value: Number(d.discount_value || 0),
+        start_date: d.start_date,
+        end_date: d.end_date,
+        discount_number: d.discount_number ?? null,
+        desc: d.desc ?? null,
+    };
+};
+
+const withActiveDiscount = (product) => ({
+    ...product,
+    discount: pickActiveDiscount(product.discounts),
+});
 
 const computeAggregates = (product, ratingMap) => {
     const variants = (product.variants || []).filter(
@@ -250,7 +282,7 @@ class ProductService {
             limit,
             offset: (page - 1) * limit,
             subQuery: false,
-            distinct: true,
+            group: ["Product.product_id"],
             col: "product_id",
         });
 
@@ -274,6 +306,22 @@ class ProductService {
             include: [
                 { model: Brand, as: "brand" },
                 { model: Category, as: "category" },
+                {
+                    model: Discount,
+                    as: "discounts",
+                    through: { attributes: [] },
+                    required: false,
+                    where: buildActiveDiscountWhere(),
+                    attributes: [
+                        "discount_id",
+                        "type_discount",
+                        "discount_value",
+                        "start_date",
+                        "end_date",
+                        "discount_number",
+                        "desc",
+                    ],
+                },
                 {
                     model: ProductVariant,
                     as: "variants",
@@ -313,7 +361,7 @@ class ProductService {
                 ...plain,
                 ...computeAggregates(plain, ratingMap),
             };
-            return withTryOnImageUrl(aggregated);
+            return withActiveDiscount(withTryOnImageUrl(aggregated));
         });
 
         return {
@@ -390,6 +438,22 @@ class ProductService {
                 { model: Brand, as: "brand" },
                 { model: Category, as: "category" },
                 {
+                    model: Discount,
+                    as: "discounts",
+                    through: { attributes: [] },
+                    required: false,
+                    where: buildActiveDiscountWhere(),
+                    attributes: [
+                        "discount_id",
+                        "type_discount",
+                        "discount_value",
+                        "start_date",
+                        "end_date",
+                        "discount_number",
+                        "desc",
+                    ],
+                },
+                {
                     model: ProductVariant,
                     as: "variants",
                     where: { is_active: true },
@@ -416,10 +480,12 @@ class ProductService {
         );
         const ratingMap = await loadRatingMap(variantIds);
         const plain = product.toJSON();
-        return withTryOnImageUrl({
-            ...plain,
-            ...computeAggregates(plain, ratingMap),
-        });
+        return withActiveDiscount(
+            withTryOnImageUrl({
+                ...plain,
+                ...computeAggregates(plain, ratingMap),
+            }),
+        );
     }
 
     async getRelatedProducts(productId, limit = 8) {
@@ -451,6 +517,22 @@ class ProductService {
                 { model: Brand, as: "brand" },
                 { model: Category, as: "category" },
                 {
+                    model: Discount,
+                    as: "discounts",
+                    through: { attributes: [] },
+                    required: false,
+                    where: buildActiveDiscountWhere(),
+                    attributes: [
+                        "discount_id",
+                        "type_discount",
+                        "discount_value",
+                        "start_date",
+                        "end_date",
+                        "discount_number",
+                        "desc",
+                    ],
+                },
+                {
                     model: ProductVariant,
                     as: "variants",
                     where: { is_active: true },
@@ -478,10 +560,12 @@ class ProductService {
 
         return candidates.map((p) => {
             const plain = p.toJSON();
-            return withTryOnImageUrl({
-                ...plain,
-                ...computeAggregates(plain, ratingMap),
-            });
+            return withActiveDiscount(
+                withTryOnImageUrl({
+                    ...plain,
+                    ...computeAggregates(plain, ratingMap),
+                }),
+            );
         });
     }
 
