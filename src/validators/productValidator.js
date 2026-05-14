@@ -14,6 +14,9 @@ const VALID_SORT = new Set([
 const isPositiveNumber = (value) =>
     !isNaN(value) && Number(value) >= 0;
 
+const isOptionalString = (value) =>
+    value === undefined || value === null || typeof value === "string";
+
 const validateGetProductsQuery = (req, res, next) => {
     const {
         page,
@@ -128,6 +131,9 @@ const validateCreateProduct = (req, res, next) => {
         if (!v.image) {
             return sendResponse(res, 400, "Variant image is required.");
         }
+        if (!isOptionalString(v.image3d)) {
+            return sendResponse(res, 400, "Variant image3d must be a string.");
+        }
     }
 
     return next();
@@ -188,6 +194,15 @@ const validateUpdateProduct = (req, res, next) => {
                         ),
                     );
                 }
+            }
+
+            if (!isOptionalString(item.image3d)) {
+                return next(
+                    new ApiError(
+                        statusCodes.BAD_REQUEST,
+                        "Variant image3d must be a string.",
+                    ),
+                );
             }
         }
     }

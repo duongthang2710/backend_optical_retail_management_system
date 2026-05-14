@@ -78,6 +78,7 @@ CREATE TABLE Product_Variants (
     color VARCHAR(255),
     stock_quantity INT,
     image VARCHAR(255),
+    image3d VARCHAR(255) NULL,
     price INT,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -217,13 +218,13 @@ INSERT INTO Products (product_id, category_id, brand_id, product_name, material,
 (5, 2, 3, 'Gucci Oversized', 'Kim loại mạ vàng', 'Mắt mèo', 'Phong cách sang trọng', TRUE);
 
 -- Chi tiết biến thể (Màu sắc, giá, kho)
-INSERT INTO Product_Variants (variant_id, product_id, color, stock_quantity, image, price, is_active) VALUES
-(1, 1, 'Vàng kim', 15, 'aviator_gold.jpg', 4500000, TRUE),
-(2, 1, 'Bạc', 10, 'aviator_silver.jpg', 4200000, TRUE),
-(3, 2, 'Đen bóng', 25, 'gm_southside_black.jpg', 5800000, TRUE),
-(4, 3, 'Đồi mồi', 12, 'wayfarer_tortoise.jpg', 3900000, TRUE),
-(5, 4, 'Trong suốt', 100, 'essilor_crizal.jpg', 1200000, TRUE),
-(6, 5, 'Hồng trà', 5, 'gucci_pink.jpg', 12500000, TRUE);
+INSERT INTO Product_Variants (variant_id, product_id, color, stock_quantity, image, image3d, price, is_active) VALUES
+(1, 1, 'Vàng kim', 15, 'aviator_gold.jpg', NULL, 4500000, TRUE),
+(2, 1, 'Bạc', 10, 'aviator_silver.jpg', NULL, 4200000, TRUE),
+(3, 2, 'Đen bóng', 25, 'gm_southside_black.jpg', NULL, 5800000, TRUE),
+(4, 3, 'Đồi mồi', 12, 'wayfarer_tortoise.jpg', NULL, 3900000, TRUE),
+(5, 4, 'Trong suốt', 100, 'essilor_crizal.jpg', NULL, 1200000, TRUE),
+(6, 5, 'Hồng trà', 5, 'gucci_pink.jpg', NULL, 12500000, TRUE);
 
 
 -- Dữ liệu Discounts

@@ -26,6 +26,10 @@ const ProductVariant = sequelize.define(
             type: DataTypes.STRING(255),
             allowNull: false,
         },
+        image3d: {
+            type: DataTypes.STRING(255),
+            allowNull: true,
+        },
         price: {
             type: DataTypes.DECIMAL(10, 2),
             allowNull: false,

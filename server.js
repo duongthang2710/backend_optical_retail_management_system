@@ -4,6 +4,8 @@ const cors = require("cors");
 const express = require("express");
 const morgan = require("morgan");
 
+const path = require("path");
+
 const authRoute = require("./src/routes/authRoute");
 const adminRoute = require("./src/routes/adminRoute");
 const cartRoute = require("./src/routes/cartRoute");
@@ -38,7 +40,7 @@ app.get("/", (req, res) => {
         message: "Optical retail management API is running",
     });
 });
-
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/auth", authRoute);
 app.use("/admin", adminRoute);
 app.use("/cart", cartRoute);

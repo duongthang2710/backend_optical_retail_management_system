@@ -77,6 +77,33 @@ const computeAggregates = (product, ratingMap) => {
     };
 };
 
+const withTryOnImageUrl = (product) => {
+    const variants = Array.isArray(product.variants)
+        ? product.variants.map((variant) => ({
+            ...variant,
+            tryOnImageUrl: variant.tryOnImageUrl || variant.image || null,
+            tryOnModelUrl: variant.tryOnModelUrl || variant.image3d || null,
+        }))
+        : [];
+    const tryOnImageUrl =
+        variants.find((variant) => variant.tryOnImageUrl)?.tryOnImageUrl ||
+        product.tryOnImageUrl ||
+        product.primary_image ||
+        null;
+    const tryOnModelUrl =
+        variants.find((variant) => variant.tryOnModelUrl)?.tryOnModelUrl ||
+        product.tryOnModelUrl ||
+        product.image3d ||
+        null;
+
+    return {
+        ...product,
+        variants,
+        tryOnImageUrl,
+        tryOnModelUrl,
+    };
+};
+
 const loadRatingMap = async (variantIds) => {
     const ratingMap = new Map();
     if (!variantIds.length) return ratingMap;
@@ -257,6 +284,7 @@ class ProductService {
                         "price",
                         "stock_quantity",
                         "image",
+                        "image3d",
                         "is_active",
                     ],
                 },
@@ -279,7 +307,8 @@ class ProductService {
 
         const enriched = orderedProducts.map((p) => {
             const plain = p.toJSON ? p.toJSON() : p;
-            return { ...plain, ...computeAggregates(plain, ratingMap) };
+            const aggregated = { ...plain, ...computeAggregates(plain, ratingMap) };
+            return withTryOnImageUrl(aggregated);
         });
 
         return {
@@ -361,6 +390,7 @@ class ProductService {
                         "price",
                         "stock_quantity",
                         "image",
+                        "image3d",
                         "is_active",
                     ],
                 },
@@ -375,7 +405,7 @@ class ProductService {
         );
         const ratingMap = await loadRatingMap(variantIds);
         const plain = product.toJSON();
-        return { ...plain, ...computeAggregates(plain, ratingMap) };
+        return withTryOnImageUrl({ ...plain, ...computeAggregates(plain, ratingMap) });
     }
 
     async getRelatedProducts(productId, limit = 8) {
@@ -418,6 +448,7 @@ class ProductService {
                         "price",
                         "stock_quantity",
                         "image",
+                        "image3d",
                         "is_active",
                     ],
                 },
@@ -433,7 +464,7 @@ class ProductService {
 
         return candidates.map((p) => {
             const plain = p.toJSON();
-            return { ...plain, ...computeAggregates(plain, ratingMap) };
+            return withTryOnImageUrl({ ...plain, ...computeAggregates(plain, ratingMap) });
         });
     }
 
@@ -483,6 +514,7 @@ class ProductService {
                                 price: item.price,
                                 stock_quantity: item.stock_quantity,
                                 image: item.image,
+                                image3d: item.image3d,
                             },
                             {
                                 where: {

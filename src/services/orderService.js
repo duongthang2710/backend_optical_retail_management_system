@@ -12,6 +12,7 @@ const ProductOrder = db.ProductOrder;
 const ProductVariant = db.ProductVariant;
 const Product = db.Product;
 const Address = db.Address;
+const User = db.User;
 const UserAddress = db.UserAddress;
 
 const VALID_PAYMENT_METHODS = new Set(Object.values(PAYMENT_METHODS));
@@ -41,17 +42,31 @@ const ORDER_INCLUDE = [
         ],
     },
     { model: Address, as: "address" },
+    {
+        model: User,
+        as: "user",
+        attributes: ["user_id", "user_name", "full_name", "email"],
+    },
 ];
 
 const formatOrder = (order) => {
     if (!order) return null;
     const plain = order.toJSON ? order.toJSON() : order;
+    if (plain.user) {
+        plain.user = {
+            user_id: plain.user.user_id,
+            user_name: plain.user.user_name,
+            full_name: plain.user.full_name,
+            email: plain.user.email,
+        };
+    }
     plain.items = (plain.items || []).map((item) => ({
         variant_id: item.variant_id,
         product_id: item.variant?.product_id || null,
         product_name: item.variant?.product?.product_name || null,
         color: item.variant?.color || null,
         image: item.variant?.image || null,
+        image3d: item.variant?.image3d || null,
         price_at_purchase: Number(item.price_at_purchase || 0),
         quantity: Number(item.quantity || 0),
         discount_amount: Number(item.discount_amount || 0),

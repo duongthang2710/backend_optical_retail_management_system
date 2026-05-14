@@ -46,6 +46,7 @@ class CartService {
                 product_name: product?.product_name || null,
                 color: variant?.color || null,
                 image: variant?.image || null,
+                image3d: variant?.image3d || null,
                 stock_quantity: Number(variant?.stock_quantity || 0),
                 quantity,
                 unit_price: unitPrice,
@@ -128,6 +129,7 @@ class CartService {
                                 "color",
                                 "stock_quantity",
                                 "image",
+                                "image3d",
                                 "price",
                             ],
                             include: [
